@@ -6,6 +6,8 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import ar.edu.utn.dds.k3003.clients.FuenteProxy;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +62,16 @@ public class Fachada implements FachadaAgregador {
   @Override
   public List<HechoDTO> hechos(String nombreColeccion) throws NoSuchElementException {
     agregador.setLista_fuentes(fuenteRepository.findAll());
-    List<Hecho> hechosModelo = agregador.obtenerHechosPorColeccion(nombreColeccion);
+      List<Fuente> fuentes = fuenteRepository.findAll();
+
+      // Por cada fuente, crea un FuenteProxy y lo añade al agregador.
+      for (Fuente fuente : fuentes) {
+          ObjectMapper objectMapper = new ObjectMapper();
+          FuenteProxy fachadaProxy = new FuenteProxy(objectMapper, fuente.getEndpoint());
+          agregador.agregarFachadaAFuente(fuente.getId(), fachadaProxy);
+      }
+
+      List<Hecho> hechosModelo = agregador.obtenerHechosPorColeccion(nombreColeccion);
 
     if (hechosModelo == null || hechosModelo.isEmpty()) {
       throw new NoSuchElementException("Busqueda no encontrada de: " + nombreColeccion);

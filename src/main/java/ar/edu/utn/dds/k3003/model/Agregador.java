@@ -97,7 +97,8 @@ public class Agregador {
         if (existe_Fuente == null) {
             throw new NoSuchElementException("No se encontro la fuente");
         }
-        fachadaFuentes.put(fuenteId, fuente);
+        this.fachadaFuentes.put(fuenteId, fuente);
         existe_Fuente.setFachadaFuente(fuente);
+
     }
 }

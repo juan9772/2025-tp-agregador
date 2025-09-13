@@ -6,6 +6,7 @@ import ar.edu.utn.dds.k3003.facades.dtos.ColeccionDTO;
 import ar.edu.utn.dds.k3003.facades.dtos.HechoDTO;
 import ar.edu.utn.dds.k3003.facades.dtos.PdIDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import io.javalin.http.HttpStatus;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -23,6 +24,7 @@ public class FuenteProxy implements FachadaFuente {
     public FuenteProxy(ObjectMapper objectMapper) {
         var env = System.getenv();
         this.endpoint = env.getOrDefault("Fuente", "https://two025-tp-entrega-2-juan9772-1.onrender.com/");
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
         var retrofit =
                 new Retrofit.Builder()
@@ -37,6 +39,7 @@ public class FuenteProxy implements FachadaFuente {
     // Segundo constructor: Permite pasar el endpoint dinámicamente.
     public FuenteProxy(ObjectMapper objectMapper, String endpoint) {
         this.endpoint = endpoint; // Usa el endpoint que viene como parámetro
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
         var retrofit =
                 new Retrofit.Builder()

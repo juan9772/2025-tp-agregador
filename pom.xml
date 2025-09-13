@@ -26,6 +26,7 @@
     <!-- Dependencies versions -->
     <junit.version>5.10.2</junit.version>
     <mockito.version>5.11.0</mockito.version>
+    <retrofit.version>2.11.0</retrofit.version>
   </properties>
 
   <dependencies>
@@ -82,7 +83,12 @@
       <artifactId>dds-eval-tp2025</artifactId>
       <version>0.0.7</version>
     </dependency>
-
+    <!--postgresql      -->
+      <dependency>
+          <groupId>org.postgresql</groupId>
+          <artifactId>postgresql</artifactId>
+          <scope>runtime</scope>
+      </dependency>
 
     <!-- Spring Boot Test -->
     <dependency>
@@ -90,7 +96,23 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+      <!--json y retrofit2-->
+    <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+        <version>2.17.1</version>
+    </dependency>
 
+      <dependency>
+          <groupId>com.squareup.retrofit2</groupId>
+          <artifactId>retrofit</artifactId>
+          <version>${retrofit.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>com.squareup.retrofit2</groupId>
+          <artifactId>converter-jackson</artifactId>
+          <version>${retrofit.version}</version>
+      </dependency>
   </dependencies>
 
   <build>

@@ -107,6 +107,11 @@
             </exclude>
           </excludes>
         </configuration>
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-datadog</artifactId>
+        <version>1.12.0</version>
+    </dependency>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

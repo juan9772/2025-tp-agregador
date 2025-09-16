@@ -9,7 +9,7 @@ import ar.edu.utn.dds.k3003.facades.FachadaAgregador;
 import ar.edu.utn.dds.k3003.facades.dtos.FuenteDTO;
 
 @RestController
-@RequestMapping("/fuentes")
+@RequestMapping("/api/fuentes")
 public class FuenteController {
 
     private final FachadaAgregador fachadaAgregador;

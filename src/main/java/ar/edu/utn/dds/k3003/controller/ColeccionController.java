@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/coleccion")
+@RequestMapping("/api")
 public class ColeccionController {
 
     private final FachadaAgregador fachadaAgregador;
@@ -18,7 +18,7 @@ public class ColeccionController {
         this.fachadaAgregador = fachadaAgregador;
     }
 
-    @GetMapping("/{nombre}/hechos")
+    @GetMapping("/colecciones/{nombre}/hechos")
     public ResponseEntity<List<HechoDTO>> listarHechosPorColeccion(@PathVariable String nombre) {
         return ResponseEntity.ok(fachadaAgregador.hechos(nombre));
     }

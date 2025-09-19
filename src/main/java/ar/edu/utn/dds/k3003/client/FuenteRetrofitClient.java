@@ -1,4 +1,4 @@
-package ar.edu.utn.dds.k3003.clients;
+package ar.edu.utn.dds.k3003.client;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ public interface FuenteRetrofitClient {
     @GET("/api/colecciones")
     Call<List<ColeccionDTO>> getCollecciones();
 
-    @GET("/api/coleccion/{nombre}/hechos")
+    @GET("/api/colecciones/{nombre}/hechos")
     Call<List<HechoDTO>> getHechosPorColleccion(@Path("nombre") String id);
 
 }

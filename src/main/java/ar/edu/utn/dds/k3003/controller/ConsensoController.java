@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/consenso")
+@RequestMapping("/api/consensos")
 public class ConsensoController {
 
     private final FachadaAgregador fachadaAgregador;

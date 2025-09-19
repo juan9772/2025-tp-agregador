@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import ar.edu.utn.dds.k3003.clients.FuenteProxy;
+import ar.edu.utn.dds.k3003.client.FuenteProxy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

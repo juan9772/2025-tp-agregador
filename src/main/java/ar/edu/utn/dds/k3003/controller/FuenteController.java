@@ -9,6 +9,7 @@ import ar.edu.utn.dds.k3003.facades.FachadaAgregador;
 import ar.edu.utn.dds.k3003.facades.dtos.FuenteDTO;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/fuentes")
 public class FuenteController {
 

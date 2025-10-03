@@ -24,7 +24,7 @@ public class SolicitudesProxy implements FachadaSolicitudes {
     public SolicitudesProxy(ObjectMapper objectMapper) {
 
         var env = System.getenv();
-        String base = env.getOrDefault("SolicitudesProxy", "http://localhost:8081/");
+        String base = env.getOrDefault("SolicitudesProxy", "https://grupo12-solicitudes.onrender.com/");
         if (!base.endsWith("/")) {
             base = base + "/";
         }

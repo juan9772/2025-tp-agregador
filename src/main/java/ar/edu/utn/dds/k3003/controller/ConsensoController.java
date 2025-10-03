@@ -1,7 +1,7 @@
 package ar.edu.utn.dds.k3003.controller;
 
-import ar.edu.utn.dds.k3003.facades.FachadaAgregador;
-import ar.edu.utn.dds.k3003.facades.dtos.ConsensosEnum;
+import ar.edu.utn.dds.k3003.app.Fachada;
+import ar.edu.utn.dds.k3003.dtos.ConsensosEnum;
 
 import java.util.Map;
 
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/consensos")
 public class ConsensoController {
 
-    private final FachadaAgregador fachadaAgregador;
+    private final Fachada fachada;
 
-    public ConsensoController(FachadaAgregador fachadaAgregador) {
-        this.fachadaAgregador = fachadaAgregador;
+    public ConsensoController(Fachada fachada) {
+        this.fachada = fachada;
     }
 
     @PatchMapping
@@ -24,7 +24,7 @@ public class ConsensoController {
         ConsensosEnum consenso = ConsensosEnum.valueOf(body.get("tipo").toUpperCase());
         String coleccion = body.get("coleccion");
 
-        fachadaAgregador.setConsensoStrategy(consenso, coleccion);
+        fachada.setConsensoStrategy(consenso, coleccion);
         return ResponseEntity.noContent().build();
     }
 

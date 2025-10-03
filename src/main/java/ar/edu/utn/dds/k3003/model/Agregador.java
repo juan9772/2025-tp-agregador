@@ -5,7 +5,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import ar.edu.utn.dds.k3003.facades.FachadaFuente;
-import ar.edu.utn.dds.k3003.facades.dtos.ConsensosEnum;
+import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
+import ar.edu.utn.dds.k3003.dtos.ConsensosEnum;
 import ar.edu.utn.dds.k3003.facades.dtos.HechoDTO;
 import lombok.Data;
 
@@ -15,6 +16,7 @@ public class Agregador {
     private List<Fuente> lista_fuentes = new ArrayList<>();
     private Map<String, FachadaFuente> fachadaFuentes = new HashMap<>();
     private Map<String, ConsensosEnum> tipoConsensoXColeccion = new HashMap<>();
+    private FachadaSolicitudes fachadaSolicitudes;
 
     public Fuente agregarFuente(Fuente newFuente) {
         lista_fuentes.add(newFuente);
@@ -50,6 +52,10 @@ public class Agregador {
         return hechos;
     }
 
+    public void setFachadaSolicitudes(FachadaSolicitudes fachadaSolicitudes) {
+        this.fachadaSolicitudes = fachadaSolicitudes;
+    }
+
     public List<Hecho> obtenerHechosPorColeccion(String nombreColeccion) {
 
         if (!tipoConsensoXColeccion.containsKey(nombreColeccion)) {
@@ -83,6 +89,13 @@ public class Agregador {
                                     (h1, h2) -> h1))
                             .values().stream().collect(Collectors.toList());
                 }
+            case ESTRICTO:
+                if (fachadaSolicitudes == null) {
+                    throw new IllegalStateException("FachadaSolicitudes no configurada");
+                }
+                return hechos.stream()
+                        .filter(h -> fachadaSolicitudes.buscarSolicitudXHecho(h.getId()).isEmpty())
+                        .collect(Collectors.toList());
             default:
                 throw new IllegalArgumentException("Estrategia no soportada: " + estrategia);
         }

@@ -1,6 +1,6 @@
 package ar.edu.utn.dds.k3003.controller;
 
-import ar.edu.utn.dds.k3003.facades.FachadaAgregador;
+import ar.edu.utn.dds.k3003.app.Fachada;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Gauge;
 import org.slf4j.Logger;
@@ -20,19 +20,19 @@ public class MetricsController {
 
     private static final Logger log = LoggerFactory.getLogger(MetricsController.class);
     private final MeterRegistry meterRegistry;
-    private final FachadaAgregador fachadaAgregador;
+    private final Fachada fachada;
 
     @Autowired
-    public MetricsController(MeterRegistry meterRegistry, FachadaAgregador fachadaAgregador) {
+    public MetricsController(MeterRegistry meterRegistry, Fachada fachada) {
         this.meterRegistry = meterRegistry;
-        this.fachadaAgregador = fachadaAgregador;
+        this.fachada = fachada;
         log.info("✅ MetricsController inicializado para métricas funcionales");
     }
 
     // Total de fuentes registradas
     @GetMapping("/fuentes/total")
     public ResponseEntity<Map<String, Object>> getTotalFuentes() {
-        List<?> fuentes = fachadaAgregador.fuentes();
+        List<?> fuentes = fachada.fuentes();
         int total = fuentes.size();
         meterRegistry.gauge("dds.fuentes.total.count", total);
         return ResponseEntity.ok(Map.of("totalFuentes", total));
@@ -41,7 +41,7 @@ public class MetricsController {
     // Total de colecciones activas (por nombre único de colección en hechos)
     @GetMapping("/colecciones/total")
     public ResponseEntity<Map<String, Object>> getTotalColecciones() {
-        List<?> hechos = fachadaAgregador.hechos(""); // "" para traer todos los hechos
+        List<?> hechos = fachada.hechos(""); // "" para traer todos los hechos
         long total = hechos.stream()
                 .map(h -> ((ar.edu.utn.dds.k3003.facades.dtos.HechoDTO) h).nombreColeccion())
                 .distinct()
@@ -53,7 +53,7 @@ public class MetricsController {
     // Total de hechos activos
     @GetMapping("/hechos/total")
     public ResponseEntity<Map<String, Object>> getTotalHechos() {
-        List<?> hechos = fachadaAgregador.hechos(""); // "" para traer todos los hechos
+        List<?> hechos = fachada.hechos(""); // "" para traer todos los hechos
         int total = hechos.size();
         meterRegistry.gauge("dds.hechos.activos.count", total);
         return ResponseEntity.ok(Map.of("totalHechos", total));
@@ -62,7 +62,7 @@ public class MetricsController {
     // Hechos por colección
     @GetMapping("/hechos/por-coleccion")
     public ResponseEntity<Map<String, Object>> getHechosPorColeccion() {
-        List<?> hechos = fachadaAgregador.hechos(""); // "" para traer todos los hechos
+        List<?> hechos = fachada.hechos(""); // "" para traer todos los hechos
         Map<String, Integer> hechosPorColeccion = new HashMap<>();
         for (Object obj : hechos) {
             var hecho = (ar.edu.utn.dds.k3003.facades.dtos.HechoDTO) obj;

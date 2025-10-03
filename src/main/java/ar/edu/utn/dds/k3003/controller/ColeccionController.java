@@ -1,6 +1,6 @@
 package ar.edu.utn.dds.k3003.controller;
 
-import ar.edu.utn.dds.k3003.facades.FachadaAgregador;
+import ar.edu.utn.dds.k3003.app.Fachada;
 import ar.edu.utn.dds.k3003.facades.dtos.HechoDTO;
 
 import org.springframework.http.ResponseEntity;
@@ -13,15 +13,15 @@ import java.util.List;
 @RequestMapping("/api")
 public class ColeccionController {
 
-    private final FachadaAgregador fachadaAgregador;
+    private final Fachada fachada;
 
-    public ColeccionController(FachadaAgregador fachadaAgregador) {
-        this.fachadaAgregador = fachadaAgregador;
+    public ColeccionController(Fachada fachada) {
+        this.fachada = fachada;
     }
 
     @GetMapping("/colecciones/{nombre}/hechos")
     public ResponseEntity<List<HechoDTO>> listarHechosPorColeccion(@PathVariable String nombre) {
-        return ResponseEntity.ok(fachadaAgregador.hechos(nombre));
+        return ResponseEntity.ok(fachada.hechos(nombre));
     }
 
 }

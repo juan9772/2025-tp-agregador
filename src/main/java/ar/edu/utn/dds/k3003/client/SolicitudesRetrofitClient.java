@@ -4,10 +4,10 @@ import ar.edu.utn.dds.k3003.facades.dtos.SolicitudDTO;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
-
+import retrofit2.http.Query;
 import java.util.List;
 
 public interface SolicitudesRetrofitClient {
-    @GET("/api/solicitudes/{hechoId}")
-    Call<List<SolicitudDTO>> obtenerSolicitudPorHecho(@Path("hechoId") String id);
+    @GET("api/solicitudes")
+Call<List<SolicitudDTO>> obtenerSolicitudPorHecho(@Query("hechoId") String hechoId);
 }

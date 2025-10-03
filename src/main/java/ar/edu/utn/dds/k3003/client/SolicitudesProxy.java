@@ -7,6 +7,7 @@ import ar.edu.utn.dds.k3003.facades.dtos.HechoDTO;
 import ar.edu.utn.dds.k3003.facades.dtos.SolicitudDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.HttpStatus;
+import org.springframework.stereotype.Service;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+@Service
 public class SolicitudesProxy implements FachadaSolicitudes {
     final private String endpoint;
     private final SolicitudesRetrofitClient service;
@@ -22,7 +24,7 @@ public class SolicitudesProxy implements FachadaSolicitudes {
     public SolicitudesProxy(ObjectMapper objectMapper) {
 
         var env = System.getenv();
-        String base = env.getOrDefault("SolicitudesProxy", "https://localhost:8081/");
+        String base = env.getOrDefault("SolicitudesProxy", "http://localhost:8081/");
         if (!base.endsWith("/")) {
             base = base + "/";
         }

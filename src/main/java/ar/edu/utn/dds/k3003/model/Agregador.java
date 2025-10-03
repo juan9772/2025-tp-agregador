@@ -70,44 +70,75 @@ public class Agregador {
     public List<Hecho> obtenerHechosPorColeccion(String nombreColeccion) {
 
         if (!tipoConsensoXColeccion.containsKey(nombreColeccion)) {
+            logger.warn("No hay estrategia de consenso configurada para la colección '{}', devolviendo lista vacía.", nombreColeccion);
             return Collections.emptyList();
         }
 
         ConsensosEnum estrategia = tipoConsensoXColeccion.get(nombreColeccion);
+        logger.info("Inicio de consenso para colección '{}' con estrategia '{}'", nombreColeccion, estrategia);
+
         List<Hecho> hechos = obtenerHechosDeTodasLasFuentes(nombreColeccion);
+        logger.info("Se obtuvieron {} hechos en total de todas las fuentes para la colección '{}'", hechos.size(), nombreColeccion);
+
         Map<String, Hecho> hechosUnicos = hechos.stream()
                 .collect(Collectors.toMap(
                         Hecho::getTitulo,
                         Function.identity(),
                         (existente, nuevo) -> existente));
+        logger.info("Se encontraron {} hechos únicos (por título) para la colección '{}'", hechosUnicos.size(), nombreColeccion);
+
         switch (estrategia) {
             case TODOS:
+                logger.info("Consenso TODOS: Devolviendo {} hechos únicos.", hechosUnicos.size());
                 return new ArrayList<>(hechosUnicos.values());
+
             case AL_MENOS_2:
-                if (lista_fuentes.size() == 1) {
+                logger.info("Consenso AL_MENOS_2: Analizando {} hechos únicos para la colección '{}'", hechosUnicos.size(), nombreColeccion);
+                if (lista_fuentes.size() <= 1) {
+                    logger.warn("Consenso AL_MENOS_2: Solo hay {} fuentes. No se puede aplicar el consenso de 'al menos 2'. Devolviendo todos los hechos únicos.", lista_fuentes.size());
                     return new ArrayList<>(hechosUnicos.values());
                 } else {
-                    Set<String> titulos_Repetidos = hechos.stream()
+                    Map<String, Set<String>> origenesPorTitulo = hechos.stream()
                             .collect(Collectors.groupingBy(Hecho::getTitulo,
-                                    Collectors.mapping(Hecho::getOrigen, Collectors.toSet())))
-                            .entrySet().stream()
-                            .filter(e -> e.getValue().size() >= 2)
+                                    Collectors.mapping(Hecho::getOrigen, Collectors.toSet())));
+
+                    Set<String> titulosRepetidos = origenesPorTitulo.entrySet().stream()
+                            .filter(entry -> entry.getValue().size() >= 2)
                             .map(Map.Entry::getKey)
                             .collect(Collectors.toSet());
-                    return hechos.stream().filter(h -> titulos_Repetidos.contains(h.getTitulo()))
-                            .collect(Collectors.toMap(
-                                    Hecho::getTitulo, Function.identity(),
-                                    (h1, h2) -> h1))
-                            .values().stream().collect(Collectors.toList());
+                    
+                    logger.info("Consenso AL_MENOS_2: Se encontraron {} títulos de hechos presentes en al menos 2 fuentes.", titulosRepetidos.size());
+
+                    List<Hecho> resultado = hechosUnicos.values().stream()
+                        .filter(h -> titulosRepetidos.contains(h.getTitulo()))
+                        .collect(Collectors.toList());
+
+                    logger.info("Consenso AL_MENOS_2: Devolviendo {} hechos finales.", resultado.size());
+                    return resultado;
                 }
+
             case ESTRICTO:
+                logger.info("Consenso ESTRICTO: Filtrando {} hechos únicos que no tengan solicitudes asociadas.", hechosUnicos.size());
                 if (fachadaSolicitudes == null) {
+                    logger.error("Consenso ESTRICTO: FachadaSolicitudes no configurada. No se puede continuar.");
                     throw new IllegalStateException("FachadaSolicitudes no configurada");
                 }
-                return hechos.stream()
-                        .filter(h -> fachadaSolicitudes.buscarSolicitudXHecho(h.getId()).isEmpty())
+                
+                List<Hecho> hechosSinSolicitud = hechosUnicos.values().stream()
+                        .filter(h -> {
+                            boolean tieneSolicitud = !fachadaSolicitudes.buscarSolicitudXHecho(h.getId()).isEmpty();
+                            if(tieneSolicitud) {
+                                logger.debug("Consenso ESTRICTO: Descartando hecho '{}' (id: {}) porque tiene solicitudes asociadas.", h.getTitulo(), h.getId());
+                            }
+                            return !tieneSolicitud;
+                        })
                         .collect(Collectors.toList());
+
+                logger.info("Consenso ESTRICTO: Devolviendo {} hechos que no tienen solicitudes.", hechosSinSolicitud.size());
+                return hechosSinSolicitud;
+
             default:
+                logger.error("Estrategia de consenso no soportada: {}", estrategia);
                 throw new IllegalArgumentException("Estrategia no soportada: " + estrategia);
         }
     }

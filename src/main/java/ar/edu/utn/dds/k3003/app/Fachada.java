@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import ar.edu.utn.dds.k3003.client.FuenteProxy;
+import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,14 +32,17 @@ public class Fachada  {
   private static final Logger logger = LoggerFactory.getLogger(Fachada.class);
 
   private final FuenteRepository fuenteRepository;
+  private final FachadaSolicitudes fachadaSolicitudes;
 
   protected Fachada() {
     this.fuenteRepository = new InMemoryFuenteRepo();
+    this.fachadaSolicitudes = null; // O una implementación por defecto si es necesario
   }
 
   @Autowired
-  public Fachada(JpaFuenteRepository fuenteRepository) {
+  public Fachada(JpaFuenteRepository fuenteRepository, FachadaSolicitudes fachadaSolicitudes) {
     this.fuenteRepository = fuenteRepository;
+    this.fachadaSolicitudes = fachadaSolicitudes;
   }
 
 
@@ -65,7 +69,8 @@ public class Fachada  {
   public List<HechoDTO> hechos(String nombreColeccion) throws NoSuchElementException {
     logger.info("Inicio: listar hechos para coleccion='{}'", nombreColeccion);
     agregador.setLista_fuentes(fuenteRepository.findAll());
-      List<Fuente> fuentes = fuenteRepository.findAll();
+    agregador.setFachadaSolicitudes(this.fachadaSolicitudes); // Inyectar la fachada de solicitudes
+    List<Fuente> fuentes = fuenteRepository.findAll();
 
       // Por cada fuente, crea un FuenteProxy y lo añade al agregador.
       for (Fuente fuente : fuentes) {

@@ -10,6 +10,8 @@ import ar.edu.utn.dds.k3003.client.FuenteProxy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ar.edu.utn.dds.k3003.facades.FachadaFuente;
 import ar.edu.utn.dds.k3003.dtos.ConsensosEnum;
@@ -26,6 +28,7 @@ import ar.edu.utn.dds.k3003.repository.JpaFuenteRepository;
 public class Fachada  {
 
   private Agregador agregador = new Agregador();
+  private static final Logger logger = LoggerFactory.getLogger(Fachada.class);
 
   private final FuenteRepository fuenteRepository;
 
@@ -60,11 +63,13 @@ public class Fachada  {
 
 
   public List<HechoDTO> hechos(String nombreColeccion) throws NoSuchElementException {
+    logger.info("Inicio: listar hechos para coleccion='{}'", nombreColeccion);
     agregador.setLista_fuentes(fuenteRepository.findAll());
       List<Fuente> fuentes = fuenteRepository.findAll();
 
       // Por cada fuente, crea un FuenteProxy y lo añade al agregador.
       for (Fuente fuente : fuentes) {
+          logger.info("Preparando Fachada para fuente id='{}' nombre='{}' endpoint='{}'", fuente.getId(), fuente.getNombre(), fuente.getEndpoint());
           ObjectMapper objectMapper = new ObjectMapper();
           FuenteProxy fachadaProxy = new FuenteProxy(objectMapper, fuente.getEndpoint());
           agregador.agregarFachadaAFuente(fuente.getId(), fachadaProxy);
@@ -73,11 +78,14 @@ public class Fachada  {
       List<Hecho> hechosModelo = agregador.obtenerHechosPorColeccion(nombreColeccion);
 
     if (hechosModelo == null || hechosModelo.isEmpty()) {
+      logger.warn("No se encontraron hechos para coleccion='{}' (modelo retornó null/empty)", nombreColeccion);
       throw new NoSuchElementException("Busqueda no encontrada de: " + nombreColeccion);
     }
-    return hechosModelo.stream()
+    List<HechoDTO> dto = hechosModelo.stream()
         .map(this::convertirADTO)
         .collect(Collectors.toList());
+    logger.info("Fin: listar hechos para coleccion='{}' -> {} hechos DTO preparados", nombreColeccion, dto.size());
+    return dto;
   }
 
 

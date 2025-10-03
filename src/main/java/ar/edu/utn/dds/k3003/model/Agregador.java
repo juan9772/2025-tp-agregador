@@ -9,12 +9,15 @@ import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.dtos.ConsensosEnum;
 import ar.edu.utn.dds.k3003.facades.dtos.HechoDTO;
 import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 public class Agregador {
 
     private List<Fuente> lista_fuentes = new ArrayList<>();
     private Map<String, FachadaFuente> fachadaFuentes = new HashMap<>();
+    private static final Logger logger = LoggerFactory.getLogger(Agregador.class);
     private Map<String, ConsensosEnum> tipoConsensoXColeccion = new HashMap<>();
     private FachadaSolicitudes fachadaSolicitudes;
 
@@ -33,9 +36,16 @@ public class Agregador {
         for (Fuente fuente : lista_fuentes) {
             FachadaFuente fachada = fachadaFuentes.get(fuente.getId());
 
+            logger.debug("Obteniendo hechos desde fuente id='{}' nombre='{}' con fachada={}", fuente.getId(), fuente.getNombre(), fachada != null);
+
             if (fachada != null) {
                 try {
                     List<HechoDTO> hechosDTO = fachada.buscarHechosXColeccion(nombreColeccion);
+                    logger.debug("Fuente id='{}' retornó {} hechosDTO", fuente.getId(), hechosDTO == null ? 0 : hechosDTO.size());
+                    if (hechosDTO == null) {
+                        logger.warn("Fuente id='{}' devolvió null para coleccion='{}' -> saltando", fuente.getId(), nombreColeccion);
+                        continue;
+                    }
                     hechos.addAll(
                             hechosDTO.stream()
                                     .map(dto -> {
@@ -44,6 +54,7 @@ public class Agregador {
                                         return hecho;
                                     }).toList());
                 } catch (NoSuchElementException e) {
+                    logger.warn("Fuente id='{}' no tiene hechos para coleccion='{}' : {}", fuente.getId(), nombreColeccion, e.getMessage());
                     continue;
                 }
             }
@@ -110,6 +121,7 @@ public class Agregador {
         if (existe_Fuente == null) {
             throw new NoSuchElementException("No se encontro la fuente");
         }
+        logger.info("Agregando fachada para fuenteId='{}' (fuente encontrada nombre='{}')", fuenteId, existe_Fuente.getNombre());
         this.fachadaFuentes.put(fuenteId, fuente);
         existe_Fuente.setFachadaFuente(fuente);
 

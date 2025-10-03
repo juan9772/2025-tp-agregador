@@ -22,15 +22,24 @@ public class SolicitudesProxy implements FachadaSolicitudes {
     public SolicitudesProxy(ObjectMapper objectMapper) {
 
         var env = System.getenv();
-        this.endpoint = env.getOrDefault("SolicitudesProxy", "https://grupo12-solicitudes.onrender.com/");
+        String base = env.getOrDefault("SolicitudesProxy", "https://localhost:8081/");
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
 
-        var retrofit =
-                new Retrofit.Builder()
-                        .baseUrl(this.endpoint)
-                        .addConverterFactory(JacksonConverterFactory.create(objectMapper))
-                        .build();
+        this.endpoint = base;
 
-        this.service = retrofit.create(SolicitudesRetrofitClient.class);
+        try {
+            var retrofit =
+                    new Retrofit.Builder()
+                            .baseUrl(this.endpoint)
+                            .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+                            .build();
+
+            this.service = retrofit.create(SolicitudesRetrofitClient.class);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Endpoint inválido para Solicitudes: '" + this.endpoint + "' - " + e.getMessage(), e);
+        }
     }
     @Override
     public SolicitudDTO agregar(SolicitudDTO solicitudDTO) {

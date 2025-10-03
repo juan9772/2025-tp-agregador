@@ -1,6 +1,7 @@
 package ar.edu.utn.dds.k3003.app;
 
 import java.security.InvalidParameterException;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -33,16 +34,19 @@ public class Fachada  {
 
   private final FuenteRepository fuenteRepository;
   private final FachadaSolicitudes fachadaSolicitudes;
+  private final ObjectMapper objectMapper;
 
   protected Fachada() {
     this.fuenteRepository = new InMemoryFuenteRepo();
     this.fachadaSolicitudes = null; // O una implementación por defecto si es necesario
+    this.objectMapper = new ObjectMapper();
   }
 
   @Autowired
-  public Fachada(JpaFuenteRepository fuenteRepository, FachadaSolicitudes fachadaSolicitudes) {
+  public Fachada(JpaFuenteRepository fuenteRepository, FachadaSolicitudes fachadaSolicitudes, ObjectMapper objectMapper) {
     this.fuenteRepository = fuenteRepository;
     this.fachadaSolicitudes = fachadaSolicitudes;
+    this.objectMapper = objectMapper;
   }
 
 
@@ -66,7 +70,7 @@ public class Fachada  {
   }
 
 
-  public List<HechoDTO> hechos(String nombreColeccion) throws NoSuchElementException {
+  public List<HechoDTO> hechos(String nombreColeccion) {
     logger.info("Inicio: listar hechos para coleccion='{}'", nombreColeccion);
     agregador.setLista_fuentes(fuenteRepository.findAll());
     agregador.setFachadaSolicitudes(this.fachadaSolicitudes); // Inyectar la fachada de solicitudes
@@ -75,16 +79,15 @@ public class Fachada  {
       // Por cada fuente, crea un FuenteProxy y lo añade al agregador.
       for (Fuente fuente : fuentes) {
           logger.info("Preparando Fachada para fuente id='{}' nombre='{}' endpoint='{}'", fuente.getId(), fuente.getNombre(), fuente.getEndpoint());
-          ObjectMapper objectMapper = new ObjectMapper();
-          FuenteProxy fachadaProxy = new FuenteProxy(objectMapper, fuente.getEndpoint());
+          FuenteProxy fachadaProxy = new FuenteProxy(this.objectMapper, fuente.getEndpoint());
           agregador.agregarFachadaAFuente(fuente.getId(), fachadaProxy);
       }
 
       List<Hecho> hechosModelo = agregador.obtenerHechosPorColeccion(nombreColeccion);
 
     if (hechosModelo == null || hechosModelo.isEmpty()) {
-      logger.warn("No se encontraron hechos para coleccion='{}' (modelo retornó null/empty)", nombreColeccion);
-      throw new NoSuchElementException("Busqueda no encontrada de: " + nombreColeccion);
+      logger.warn("No se encontraron hechos para coleccion='{}' que cumplan los requisitos del consenso. Devolviendo lista vacía.", nombreColeccion);
+      return Collections.emptyList();
     }
     List<HechoDTO> dto = hechosModelo.stream()
         .map(this::convertirADTO)

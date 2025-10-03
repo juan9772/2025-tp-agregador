@@ -1,5 +1,6 @@
 {
     "configurations": [
+
         {
             "type": "java",
             "name": "Spring Boot-Application<my-app-name>",
@@ -8,7 +9,7 @@
             "mainClass": "ar.edu.utn.dds.k3003.Application",
             "projectName": "my-app-name",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": "${workspaceFolder}/agregador.env"
         }
     ]
 }

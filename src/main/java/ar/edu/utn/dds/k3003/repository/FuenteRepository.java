@@ -12,4 +12,6 @@ public interface FuenteRepository {
     Fuente save(Fuente fuente);
 
     List<Fuente> findAll();
+
+    void deleteAll();
 }

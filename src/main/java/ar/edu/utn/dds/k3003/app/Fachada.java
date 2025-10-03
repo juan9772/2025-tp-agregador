@@ -107,6 +107,11 @@ public class Fachada  {
     agregador.configurarConsenso(tipoConsenso, nombreColeccion);
   }
 
+  public void borrarFuentes() {
+      fuenteRepository.deleteAll();
+      logger.info("Todas las fuentes han sido borradas.");
+  }
+
   private HechoDTO convertirADTO(Hecho hecho) {
     return new HechoDTO(hecho.getId(), hecho.getColeccionNombre(), hecho.getTitulo());
   }

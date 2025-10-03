@@ -29,4 +29,10 @@ public class FuenteController {
         return ResponseEntity.ok(fachada.agregar(fuenteDTO));
     }
 
+    @DeleteMapping
+    public ResponseEntity<Void> borrarFuentes() {
+        fachada.borrarFuentes();
+        return ResponseEntity.noContent().build();
+    }
+
 }

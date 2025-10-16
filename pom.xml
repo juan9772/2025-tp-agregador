@@ -118,6 +118,18 @@
           <artifactId>micrometer-registry-datadog</artifactId>
           <version>1.12.0</version>
       </dependency>
+    <!-- Telegram bot dependency -->
+    <dependency>
+      <groupId>org.telegram</groupId>
+      <artifactId>telegrambots-spring-boot-starter</artifactId>
+      <version>6.7.0</version>
+    </dependency>
+
+    <!-- WebClient for HTTP calls to the API -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

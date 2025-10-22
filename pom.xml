@@ -82,6 +82,12 @@
       <groupId>com.github.ezequieljsosa</groupId>
       <artifactId>dds-eval-tp2025</artifactId>
       <version>0.0.7</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-simple</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!--postgresql      -->
       <dependency>
@@ -121,8 +127,14 @@
     <!-- Telegram bot dependency -->
     <dependency>
       <groupId>org.telegram</groupId>
-      <artifactId>telegrambots-spring-boot-starter</artifactId>
+      <artifactId>telegrambots</artifactId>
       <version>6.7.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-jaxb-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- WebClient for HTTP calls to the API -->
@@ -138,7 +150,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
-        <mainClass>ar.edu.utn.dds.k3003.Application</mainClass> 
+        <mainClass>ar.edu.utn.dds.k3003.app.WebApp</mainClass> 
           <excludes>
             <exclude>
               <groupId>org.projectlombok</groupId>

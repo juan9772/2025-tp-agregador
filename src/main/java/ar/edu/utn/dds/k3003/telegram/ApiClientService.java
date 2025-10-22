@@ -37,7 +37,7 @@ public class ApiClientService {
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> listarHechos() {
         try {
-            return appClient.get().uri("/hechos")
+            return fuenteClient.get().uri("/hechos")
                     .retrieve()
                     .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .collectList()
@@ -50,7 +50,7 @@ public class ApiClientService {
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> listarHechosPorColeccion(String nombreColeccion) {
         try {
-            return agregadorClient.get().uri("/colecciones/{nombre}/hechos", nombreColeccion)
+            return fuenteClient.get().uri("/colecciones/{nombre}/hechos", nombreColeccion)
                     .retrieve()
                     .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .collectList()
@@ -63,7 +63,7 @@ public class ApiClientService {
     @SuppressWarnings("unchecked")
     public Map<String, Object> obtenerHecho(String id) {
         try {
-            return appClient.get().uri("/hechos/{id}", id)
+            return fuenteClient.get().uri("/hechos/{id}", id)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block();
@@ -75,7 +75,7 @@ public class ApiClientService {
     @SuppressWarnings("unchecked")
     public Map<String, Object> crearHecho(Map<String, Object> payload) {
         try {
-            return appClient.post().uri("/hechos")
+            return fuenteClient.post().uri("/hechos")
                     .bodyValue(payload)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
@@ -88,7 +88,7 @@ public class ApiClientService {
     @SuppressWarnings("unchecked")
     public Map<String, Object> modificarEstado(String id, String estado) {
         try {
-            return appClient.patch().uri("/hechos/{id}", id)
+            return fuenteClient.patch().uri("/hechos/{id}", id)
                     .bodyValue(Map.of("estado", estado))
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})

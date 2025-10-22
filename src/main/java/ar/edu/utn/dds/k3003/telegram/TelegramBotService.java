@@ -19,10 +19,10 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private final ApiClientService apiClient;
     private final ConversationManager convManager;
 
-    @Value("${telegram.bot.token:${TELEGRAM_BOT_TOKEN:}}")
+    @Value("${telegram.bot.token}")
     private String botToken;
 
-    @Value("${telegram.bot.username:${TELEGRAM_BOT_USERNAME:MyBot}}")
+    @Value("${telegram.bot.username}")
     private String botUsername;
 
     public TelegramBotService(ApiClientService apiClient, ConversationManager convManager) {

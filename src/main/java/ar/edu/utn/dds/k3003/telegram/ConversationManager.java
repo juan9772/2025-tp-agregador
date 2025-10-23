@@ -66,23 +66,27 @@ public class ConversationManager {
 
         switch (c.state) {
             case CREAR_TITULO -> {
+                c.payload.put("id", "");
                 c.payload.put("titulo", text);
                 c.state = State.CREAR_COLECCION;
                 return "Perfecto. Ahora indicá el nombre de la colección a la que pertenece el hecho:";
             }
             case CREAR_COLECCION -> {
                 c.payload.put("nombreColeccion", text);
-                c.state = State.CREAR_DESCRIPCION;
-                return "Ok. Ahora escribí una breve descripción:";
-            }
-            case CREAR_DESCRIPCION -> {
-                c.payload.put("descripcion", text);
                 c.state = State.CREAR_CONFIRMAR;
                 String titulo = (String) c.payload.getOrDefault("titulo", "(sin título)");
                 String colec = (String) c.payload.getOrDefault("nombreColeccion", "(sin colección)");
-                String desc = (String) c.payload.getOrDefault("descripcion", "(sin descripción)");
-                return "Confirmá creación:\nTítulo: " + titulo + "\nColección: " + colec + "\nDescripción: " + desc + "\nEscribí 'si' para confirmar o 'no' para cancelar.";
+                return "Confirmá creación:\nTítulo: " + titulo + "\nColección: " + colec + "\nEscribí 'si' para confirmar o 'no' para cancelar.";
+                //return "Ok. Ahora escribí una breve descripción:";
             }
+//            case CREAR_DESCRIPCION -> {
+//                c.payload.put("descripcion", text);
+//                c.state = State.CREAR_CONFIRMAR;
+//                String titulo = (String) c.payload.getOrDefault("titulo", "(sin título)");
+//                String colec = (String) c.payload.getOrDefault("nombreColeccion", "(sin colección)");
+//                String desc = (String) c.payload.getOrDefault("descripcion", "(sin descripción)");
+//                return "Confirmá creación:\nTítulo: " + titulo + "\nColección: " + colec + "\nDescripción: " + desc + "\nEscribí 'si' para confirmar o 'no' para cancelar.";
+//            }
             case CREAR_CONFIRMAR -> {
                 if (text.equalsIgnoreCase("si") || text.equalsIgnoreCase("s")) {
                     Map<String, Object> payload = c.payload;
@@ -116,8 +120,10 @@ public class ConversationManager {
             case SOLICITUD_DESCRIPCION -> {
                 String hechoId = String.valueOf(c.payload.get("hechoId"));
                 Map<String, Object> solPayload = new ConcurrentHashMap<>();
+                solPayload.put("id", "");
                 solPayload.put("hechoId", hechoId);
                 solPayload.put("descripcion", text);
+                solPayload.put("estado", "CREADA");
                 Map<String, Object> created = apiClient.crearSolicitud(solPayload);
                 contexts.remove(chatId);
                 if (created == null) return "Error al crear la solicitud.";

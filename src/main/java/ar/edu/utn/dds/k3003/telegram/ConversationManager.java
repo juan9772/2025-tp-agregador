@@ -16,8 +16,12 @@ public class ConversationManager {
         CREAR_COLECCION,
         CREAR_DESCRIPCION,
         CREAR_CONFIRMAR,
-        AGREGAR_PDI_URL,
-        AGREGAR_PDI_DESC,
+        AGREGAR_PDI_DESCRIPCION,
+        AGREGAR_PDI_LUGAR,
+        AGREGAR_PDI_MOMENTO,
+        AGREGAR_PDI_CONTENIDO,
+        AGREGAR_PDI_IMAGEN_URL,
+        AGREGAR_PDI_CONFIRMAR,
         SOLICITUD_DESCRIPCION
     }
 
@@ -39,8 +43,8 @@ public class ConversationManager {
 
     public void startAgregarPdi(long chatId, String hechoId) {
         Context c = new Context();
-        c.state = State.AGREGAR_PDI_URL;
-        c.payload.put("hechoId", hechoId);
+        c.state = State.AGREGAR_PDI_DESCRIPCION;
+        c.payload.put("hecho_id", hechoId);
         c.updated = Instant.now();
         contexts.put(chatId, c);
     }
@@ -99,23 +103,54 @@ public class ConversationManager {
                     return "Creación cancelada.";
                 }
             }
-            case AGREGAR_PDI_URL -> {
-                c.payload.put("pdiUrl", text);
-                c.state = State.AGREGAR_PDI_DESC;
-                return "Recibido. Ahora escribí una descripción para el PdI:";
+            case AGREGAR_PDI_DESCRIPCION -> {
+                c.payload.put("descripcion", text);
+                c.state = State.AGREGAR_PDI_LUGAR;
+                return "Descripción recibida. Ahora ingresá el lugar:";
             }
-            case AGREGAR_PDI_DESC -> {
-                c.payload.put("pdiDescripcion", text);
-                // llamar crearPdi en la API
-                String hechoId = String.valueOf(c.payload.get("hechoId"));
-                Map<String, Object> pdiPayload = new ConcurrentHashMap<>();
-                pdiPayload.put("hechoId", hechoId);
-                pdiPayload.put("url", c.payload.get("pdiUrl"));
-                pdiPayload.put("descripcion", c.payload.get("pdiDescripcion"));
-                Map<String, Object> created = apiClient.crearPdi(pdiPayload);
-                contexts.remove(chatId);
-                if (created == null) return "Error al crear el PdI en el procesador.";
-                return "PdI creado con ID: " + created.getOrDefault("id", "(desconocido)");
+            case AGREGAR_PDI_LUGAR -> {
+                c.payload.put("lugar", text);
+                c.state = State.AGREGAR_PDI_MOMENTO;
+                return "Lugar recibido. Ahora ingresá el momento (formato YYYY-MM-DDTHH:MM:SS):";
+            }
+            case AGREGAR_PDI_MOMENTO -> {
+                c.payload.put("momento", text);
+                c.state = State.AGREGAR_PDI_CONTENIDO;
+                return "Momento recibido. Ahora ingresá el contenido:";
+            }
+            case AGREGAR_PDI_CONTENIDO -> {
+                c.payload.put("contenido", text);
+                c.state = State.AGREGAR_PDI_IMAGEN_URL;
+                return "Contenido recibido. Ahora ingresá la URL de la imagen:";
+            }
+            case AGREGAR_PDI_IMAGEN_URL -> {
+                c.payload.put("imagen_url", text);
+                c.state = State.AGREGAR_PDI_CONFIRMAR;
+                String desc = (String) c.payload.getOrDefault("descripcion", "(sin descripción)");
+                String lugar = (String) c.payload.getOrDefault("lugar", "(sin lugar)");
+                String momento = (String) c.payload.getOrDefault("momento", "(sin momento)");
+                String contenido = (String) c.payload.getOrDefault("contenido", "(sin contenido)");
+                String img = (String) c.payload.getOrDefault("imagen_url", "(sin imagen)");
+                return "Confirmá la creación del PdI:\n" +
+                        "Descripción: " + desc + "\n" +
+                        "Lugar: " + lugar + "\n" +
+                        "Momento: " + momento + "\n" +
+                        "Contenido: " + contenido + "\n" +
+                        "Imagen URL: " + img + "\n" +
+                        "Escribí 'si' para confirmar o 'no' para cancelar.";
+            }
+            case AGREGAR_PDI_CONFIRMAR -> {
+                if (text.equalsIgnoreCase("si") || text.equalsIgnoreCase("s")) {
+                    Map<String, Object> pdiPayload = new ConcurrentHashMap<>(c.payload);
+                    pdiPayload.put("id", "");
+                    Map<String, Object> created = apiClient.crearPdi(pdiPayload);
+                    contexts.remove(chatId);
+                    if (created == null) return "Error al crear el PdI en el procesador.";
+                    return "PdI creado con ID: " + created.getOrDefault("id", "(desconocido)");
+                } else {
+                    contexts.remove(chatId);
+                    return "Creación de PdI cancelada.";
+                }
             }
             case SOLICITUD_DESCRIPCION -> {
                 String hechoId = String.valueOf(c.payload.get("hechoId"));

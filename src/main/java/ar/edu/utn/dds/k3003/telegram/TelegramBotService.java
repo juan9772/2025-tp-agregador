@@ -75,19 +75,28 @@ public class TelegramBotService extends TelegramLongPollingBot {
                     executeSend(chatId, "Uso: /ver <id>");
                     return;
                 }
-                Map<String, Object> hecho = apiClient.obtenerHecho(p[1].trim());
+                String hechoId = p[1].trim();
+                Map<String, Object> hecho = apiClient.obtenerHecho(hechoId);
                 if (hecho == null) {
-                    executeSend(chatId, "No se encontró el hecho con id " + p[1].trim());
+                    executeSend(chatId, "No se encontró el hecho con id " + hechoId);
                     return;
                 }
                 StringBuilder sb = new StringBuilder();
                 sb.append("Título: ").append(Objects.toString(hecho.getOrDefault("titulo", "(sin título)"))).append("\n");
                 sb.append("Colección: ").append(Objects.toString(hecho.getOrDefault("nombreColeccion", "(sin colección)"))).append("\n");
                 sb.append("Descripción: ").append(Objects.toString(hecho.getOrDefault("descripcion", "(sin descripción)"))).append("\n");
-                Object pdis = hecho.get("pdis");
-                if (pdis != null) sb.append("PDIs: ").append(String.valueOf(pdis)).append("\n");
-                Object imgs = hecho.get("imagenes");
-                if (imgs != null) sb.append("Imágenes: ").append(String.valueOf(imgs)).append("\n");
+
+                List<Map<String, Object>> pdis = apiClient.buscarPdisPorHecho(hechoId);
+                if (pdis != null && !pdis.isEmpty()) {
+                    sb.append("PDIs:\n");
+                    for (Map<String, Object> pdi : pdis) {
+                        sb.append("  - ID: ").append(pdi.getOrDefault("id", "(no id)")).append("\n");
+                        sb.append("    Descripción: ").append(pdi.getOrDefault("descripcion", "(sin descripción)")).append("\n");
+                        if (pdi.containsKey("imagen_url")) {
+                            sb.append("    Imagen: ").append(pdi.get("imagen_url")).append("\n");
+                        }
+                    }
+                }
                 executeSend(chatId, sb.toString());
                 return;
             }
@@ -120,7 +129,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 }
                 String hechoId = parts[1].trim();
                 convManager.startAgregarPdi(chatId, hechoId);
-                executeSend(chatId, "Iniciando flujo de PdI para hecho " + hechoId + ". Enviá la URL del PdI:");
+                executeSend(chatId, "Iniciando flujo de PdI para hecho " + hechoId + ". Enviá la Descripcion del PdI:");
                 return;
             }
 
@@ -157,7 +166,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 }
                 String solicitudId = parts[1].trim();
                 String estado = parts[2].trim();
-                Map<String, Object> payload = Map.of("estado", estado);
+                Map<String, Object> payload = Map.of("estado", estado,"descripcion","");
                 Map<String, Object> updated = apiClient.actualizarSolicitud(solicitudId, payload);
                 if (updated == null) executeSend(chatId, "Error actualizando la solicitud.");
                 else executeSend(chatId, "Solicitud actualizada: " + updated.getOrDefault("id", solicitudId));

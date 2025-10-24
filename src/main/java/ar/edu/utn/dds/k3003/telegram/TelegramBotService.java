@@ -1,5 +1,9 @@
 package ar.edu.utn.dds.k3003.telegram;
 
+import ar.edu.utn.dds.k3003.telegram.commands.Command;
+import ar.edu.utn.dds.k3003.telegram.commands.CommandFactory;
+import ar.edu.utn.dds.k3003.telegram.states.ConversationState;
+import ar.edu.utn.dds.k3003.telegram.states.IdleState;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +15,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +25,9 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
     private static final Logger log = LoggerFactory.getLogger(TelegramBotService.class);
 
-    private final ApiClientService apiClient;
     private final ConversationManager convManager;
+    private final CommandFactory commandFactory;
+    private final ApiClientService apiClient;
 
     @Value("${telegram.bot.token}")
     private String botToken;
@@ -31,9 +35,10 @@ public class TelegramBotService extends TelegramLongPollingBot {
     @Value("${telegram.bot.username}")
     private String botUsername;
 
-    public TelegramBotService(ApiClientService apiClient, ConversationManager convManager) {
-        this.apiClient = apiClient;
+    public TelegramBotService(ConversationManager convManager, CommandFactory commandFactory, ApiClientService apiClient) {
         this.convManager = convManager;
+        this.commandFactory = commandFactory;
+        this.apiClient = apiClient;
     }
 
     @Override
@@ -68,191 +73,36 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private void handleMessage(long chatId, String text) {
         try {
             log.debug("Handling message for chat {}: {}", chatId, text);
-            if (text.startsWith("/listar")) {
+
+            // 1. Check for a known command
+            if (text.startsWith("/")) {
                 String[] parts = text.split("\\s+", 2);
-                if (parts.length > 1 && !parts[1].isBlank()) {
-                    String colec = parts[1].trim();
-                    List<Map<String, Object>> hechos = apiClient.listarHechosPorColeccion(colec);
-                    sendListHechos(chatId, hechos, "Hechos en colección: " + colec);
-                } else {
-                    List<Map<String, Object>> hechos = apiClient.listarHechos();
-                    sendListHechos(chatId, hechos, "Todos los hechos:");
+                String commandStr = parts[0];
+                Command command = commandFactory.getCommand(commandStr);
+
+                if (command != null) {
+                    String args = (parts.length > 1) ? parts[1] : "";
+                    command.execute(chatId, args, this);
+                    return; // Command executed, we are done.
                 }
-                return;
             }
 
-            if (text.startsWith("/ver")) {
-                String[] p = text.split("\\s+", 2);
-                if (p.length < 2) {
-                    executeSend(chatId, "Uso: /ver <id>");
-                    return;
-                }
-                Map<String, Object> hecho = apiClient.obtenerHecho(p[1].trim());
-                if (hecho == null) {
-                    executeSend(chatId, "No se encontró el hecho con id " + p[1].trim());
-                    return;
-                }
-                StringBuilder sb = new StringBuilder();
-                sb.append("Título: ").append(Objects.toString(hecho.getOrDefault("titulo", "(sin título)"))).append("\n");
-                sb.append("Colección: ").append(Objects.toString(hecho.getOrDefault("nombreColeccion", "(sin colección)"))).append("\n");
-                sb.append("Descripción: ").append(Objects.toString(hecho.getOrDefault("descripcion", "(sin descripción)"))).append("\n");
-
-                // imágenes y pdis guardados en el hecho (si existen)
-                Object imgs = hecho.get("imagenes");
-                if (imgs != null) sb.append("Imágenes: ").append(String.valueOf(imgs)).append("\n");
-
-                // Consultar PDIs en el microservicio PDI para obtener etiquetas automáticas
-                List<Map<String, Object>> pdis = apiClient.buscarPdisPorHecho(p[1].trim());
-                if (pdis != null && !pdis.isEmpty()) {
-                    sb.append("PDIs: \n");
-                    for (Map<String, Object> pdi : pdis) {
-                        sb.append(" - ID: ").append(pdi.getOrDefault("id", "(no id)")).append("\n");
-                        if (pdi.containsKey("imagen_url")) sb.append("   Imagen: ").append(pdi.get("imagen_url")).append("\n");
-                        // Mostrar la descripción del PDI si existe
-                        if (pdi.containsKey("descripcion")) sb.append("   Descripcion: ").append(pdi.get("descripcion")).append("\n");
-                        // Mostrar el contenido del PDI si existe
-                        if (pdi.containsKey("contenido")) sb.append("   Contenido: ").append(pdi.get("contenido")).append("\n");
-                        if (pdi.containsKey("ocr_texto")) sb.append("   OCR: ").append(pdi.get("ocr_texto")).append("\n");
-                        if (pdi.containsKey("lugar")) sb.append("   Origen: ").append(pdi.get("lugar")).append("\n");
-
-                        Object momentoObj = pdi.get("momento");
-                        if (momentoObj instanceof List) {
-                            @SuppressWarnings("unchecked")
-                            List<Number> momentoLista = (List<Number>) momentoObj;
-                            if (momentoLista.size() >= 3) { // Asegurarnos de que al menos tenemos año, mes y día.
-                                String fechaFormateada = String.format("%02d/%02d/%d",
-                                        momentoLista.get(2).intValue(), // día
-                                        momentoLista.get(1).intValue(), // mes
-                                        momentoLista.get(0).intValue()  // año
-                                );
-                                sb.append("   Fecha de Carga: ").append(fechaFormateada).append("\n");
-                            }
-                        }
-
-                        Object etiquetas = pdi.get("etiquetas_auto");
-                        if (etiquetas instanceof List) {
-                            @SuppressWarnings("unchecked")
-                            List<Object> et = (List<Object>) etiquetas;
-                            String joined = et.stream().map(Objects::toString).collect(Collectors.joining(", "));
-                            sb.append("   Etiquetas: ").append(joined).append("\n");
-                        } else if (etiquetas != null) {
-                            sb.append("   Etiquetas: ").append(etiquetas.toString()).append("\n");
-                        }
-                    }
-                } else {
-                    // Si no hay pdis en el microservicio, intentar leer campo pdis dentro del hecho
-                    Object pdisIn = hecho.get("pdis");
-                    if (pdisIn != null) sb.append("PDIs (desde hecho): ").append(String.valueOf(pdisIn)).append("\n");
-                }
-
-                executeSend(chatId, sb.toString());
-                return;
-            }
-
-            if (text.equalsIgnoreCase("/crear")) {
-                convManager.startCreating(chatId);
-                executeSend(chatId, "Vamos a crear un hecho. ¿Título?");
-                return;
-            }
-
-            if (text.startsWith("/pdis")) {
-                String[] parts = text.split("\\s+", 2);
-                if (parts.length > 1 && !parts[1].isBlank()) {
-                    String hechoId = parts[1].trim();
-                    List<Map<String, Object>> pdis = apiClient.buscarPdisPorHecho(hechoId);
-                    if (pdis == null || pdis.isEmpty()) executeSend(chatId, "No se encontraron PDIs para el hecho " + hechoId);
-                    else sendListGeneric(chatId, pdis, "PDIs para hecho " + hechoId + ":");
-                } else {
-                    List<Map<String, Object>> pdis = apiClient.listarPdis();
-                    sendListGeneric(chatId, pdis, "Todos los PDIs:");
-                }
-                return;
-            }
-
-            if (text.startsWith("/agregarpdi")) {
-                String[] parts = text.split("\\s+", 2);
-                if (parts.length < 2 || parts[1].isBlank()) {
-                    executeSend(chatId, "Uso: /agregarpdi <hechoId>");
-                    return;
-                }
-                String hechoId = parts[1].trim();
-                convManager.startAgregarPdi(chatId, hechoId);
-                executeSend(chatId, "Iniciando flujo de PdI para hecho " + hechoId + ". Enviá la URL del PdI:");
-                return;
-            }
-
-            if (text.startsWith("/solicitudes")) {
-                String[] parts = text.split("\\s+", 2);
-                if (parts.length < 2 || parts[1].isBlank()) {
-                    executeSend(chatId, "Uso: /solicitudes <hechoId>");
-                    return;
-                }
-                String hechoId = parts[1].trim();
-                List<Map<String, Object>> sols = apiClient.listarSolicitudesPorHecho(hechoId);
-                if (sols == null || sols.isEmpty()) executeSend(chatId, "No hay solicitudes para el hecho " + hechoId);
-                else sendListGeneric(chatId, sols, "Solicitudes para hecho " + hechoId + ":");
-                return;
-            }
-
-            if (text.startsWith("/solicitarborrado")) {
-                String[] parts = text.split("\\s+", 2);
-                if (parts.length < 2 || parts[1].isBlank()) {
-                    executeSend(chatId, "Uso: /solicitarborrado <hechoId>");
-                    return;
-                }
-                String hechoId = parts[1].trim();
-                convManager.startCrearSolicitud(chatId, hechoId);
-                executeSend(chatId, "Iniciando solicitud de borrado para hecho " + hechoId + ". Escribí una descripción de la solicitud:");
-                return;
-            }
-
-            if (text.startsWith("/cambiarestadosolicitud")) {
-                String[] parts = text.split("\\s+", 3);
-                if (parts.length < 3) {
-                    executeSend(chatId, "Uso: /cambiarestadosolicitud <solicitudId> <estado>");
-                    return;
-                }
-                String solicitudId = parts[1].trim();
-                String estado = parts[2].trim();
-                Map<String, Object> payload = Map.of("estado", estado);
-                Map<String, Object> updated = apiClient.actualizarSolicitud(solicitudId, payload);
-                if (updated == null) executeSend(chatId, "Error actualizando la solicitud.");
-                else executeSend(chatId, "Solicitud actualizada: " + updated.getOrDefault("id", solicitudId));
-                return;
-            }
-
-            if (text.startsWith("/cambiarestado")) {
-                String[] parts = text.split("\\s+", 3);
-                if (parts.length < 3) {
-                    executeSend(chatId, "Uso: /cambiarestado <hechoId> <estado>");
-                    return;
-                }
-                String hechoId = parts[1].trim();
-                String estado = parts[2].trim();
-                Map<String, Object> updated = apiClient.modificarEstado(hechoId, estado);
-                if (updated == null) executeSend(chatId, "Error cambiando estado del hecho.");
-                else executeSend(chatId, "Hecho actualizado: " + updated.getOrDefault("id", hechoId));
-                return;
-            }
-
-            if (text.startsWith("/fuentes")) {
-                List<Map<String, Object>> fuentes = apiClient.listarFuentes();
-                if (fuentes == null || fuentes.isEmpty()) executeSend(chatId, "No se encontraron fuentes.");
-                else sendListGeneric(chatId, fuentes, "Fuentes disponibles:");
-                return;
-            }
-
-            // manejar flujo conversacional
-            ConversationManager.State state = convManager.getState(chatId);
-            if (state != null && state != ConversationManager.State.IDLE) {
+            // 2. If not a known command, check for an active conversation
+            ConversationState state = convManager.getState(chatId);
+            if (!(state instanceof IdleState)) {
                 String resp = convManager.handle(chatId, text, apiClient);
                 executeSend(chatId, resp);
-                return;
+                return; // Conversation handled, we are done.
             }
 
-            // ayuda por defecto
-            String help = "Comandos disponibles:\n/listar [coleccion]\n/ver <id>\n/crear\n/pdis [hechoId]\n/agregarpdi <hechoId>\n/solicitudes <hechoId>\n/solicitarborrado <hechoId>\n/cambiarestado <hechoId> <estado>\n/cambiarestadosolicitud <id> <estado>\n/fuentes";
-            executeSend(chatId, help);
+            // 3. Default behavior: not a known command and no active conversation -> Show help
+            Command helpCommand = commandFactory.getCommand("/help");
+            if (helpCommand != null) {
+                helpCommand.execute(chatId, "", this);
+            } else {
+                // Fallback in case help command is not configured
+                executeSend(chatId, "Comando no reconocido.");
+            }
 
         } catch (Exception e) {
             log.error("Error interno manejando mensaje", e);
@@ -260,7 +110,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
         }
     }
 
-    private void sendListHechos(long chatId, List<Map<String, Object>> hechos, String title) {
+    public void sendListHechos(long chatId, List<Map<String, Object>> hechos, String title) {
         if (hechos == null || hechos.isEmpty()) {
             executeSend(chatId, "No hay hechos.");
             return;
@@ -277,7 +127,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
         executeSend(chatId, sb.toString());
     }
 
-    private void sendListGeneric(long chatId, List<Map<String, Object>> items, String title) {
+    public void sendListGeneric(long chatId, List<Map<String, Object>> items, String title) {
         if (items == null || items.isEmpty()) {
             executeSend(chatId, "No hay elementos.");
             return;
@@ -292,7 +142,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
         executeSend(chatId, sb.toString());
     }
 
-    private void executeSend(long chatId, String text) {
+    public void executeSend(long chatId, String text) {
         SendMessage sm = SendMessage.builder()
                 .chatId(String.valueOf(chatId))
                 .text(text)

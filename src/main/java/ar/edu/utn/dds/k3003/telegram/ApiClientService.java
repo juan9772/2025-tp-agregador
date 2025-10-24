@@ -33,6 +33,20 @@ public class ApiClientService {
         this.fuenteClient = WebClient.builder().baseUrl(fuenteBase).build();
     }
 
+    // --- Colecciones ---
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> listarColecciones() {
+        try {
+            return fuenteClient.get().uri("/colecciones")
+                    .retrieve()
+                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .collectList()
+                    .block();
+        } catch (WebClientResponseException e) {
+            return Collections.emptyList();
+        }
+    }
+
     // --- Hechos (app local o agregador) ---
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> listarHechos() {

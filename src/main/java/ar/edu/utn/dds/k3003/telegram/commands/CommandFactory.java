@@ -25,7 +25,7 @@ public class CommandFactory {
                 new PdisCommand(apiClient),
                 new SolicitudesCommand(apiClient),
                 new FuentesCommand(apiClient),
-                new ColeccionesCommand(apiClient), // <--- NUEVO COMANDO
+                new ColeccionesCommand(apiClient),
 
                 // Comandos que inician conversación
                 new CrearCommand(convManager),
@@ -33,8 +33,9 @@ public class CommandFactory {
                 new SolicitarBorradoCommand(convManager),
 
                 // Comandos de acción
-                new CambiarEstadoCommand(apiClient),
-                new CambiarEstadoSolicitudCommand(apiClient)
+                new CambiarEstadoSolicitudCommand(apiClient),
+                new AprobarBorradoCommand(apiClient),
+                new RechazarBorradoCommand(apiClient)
 
         ).collect(Collectors.toList());
 

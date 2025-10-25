@@ -9,7 +9,7 @@ public class CrearTituloState implements ConversationState {
     public String handle(Context context, String text, ApiClientService apiClient) {
         context.payload.put("id", "");
         context.payload.put("titulo", text);
-        context.state = new CrearColeccionState();
-        return "Perfecto. Ahora indicá el nombre de la colección a la que pertenece el hecho:";
+        // Corregido: El siguiente paso es la colección, no la descripción.
+        return "Título guardado. Ahora, ¿en qué colección lo guardamos?";
     }
 }

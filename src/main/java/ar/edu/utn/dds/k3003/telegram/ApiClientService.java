@@ -34,223 +34,139 @@ public class ApiClientService {
     }
 
     // --- Colecciones ---
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> listarColecciones() {
-        try {
-            return fuenteClient.get().uri("/colecciones")
-                    .retrieve()
-                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .collectList()
-                    .block();
-        } catch (WebClientResponseException e) {
-            return Collections.emptyList();
-        }
+        return fuenteClient.get().uri("/colecciones")
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .collectList()
+                .block();
     }
 
-    // --- Hechos (app local o agregador) ---
-    @SuppressWarnings("unchecked")
+    // --- Hechos ---
     public List<Map<String, Object>> listarHechos() {
-        try {
-            return fuenteClient.get().uri("/hechos")
-                    .retrieve()
-                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .collectList()
-                    .block();
-        } catch (WebClientResponseException e) {
-            return Collections.emptyList();
-        }
+        return fuenteClient.get().uri("/hechos")
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .collectList()
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> listarHechosPorColeccion(String nombreColeccion) {
-        try {
-            return fuenteClient.get().uri("/colecciones/{nombre}/hechos", nombreColeccion)
-                    .retrieve()
-                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .collectList()
-                    .block();
-        } catch (WebClientResponseException e) {
-            return Collections.emptyList();
-        }
+        return fuenteClient.get().uri("/colecciones/{nombre}/hechos", nombreColeccion)
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .collectList()
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> obtenerHecho(String id) {
-        try {
-            return fuenteClient.get().uri("/hechos/{id}", id)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return fuenteClient.get().uri("/hechos/{id}", id)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> crearHecho(Map<String, Object> payload) {
-        try {
-            return fuenteClient.post().uri("/hechos")
-                    .bodyValue(payload)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return fuenteClient.post().uri("/hechos")
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> modificarEstado(String id, String estado) {
-        try {
-            return fuenteClient.patch().uri("/hechos/{id}", id)
-                    .bodyValue(Map.of("estado", estado))
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return fuenteClient.patch().uri("/hechos/{id}", id)
+                .bodyValue(Map.of("estado", estado))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 
     // --- Solicitudes ---
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> listarSolicitudesPorHecho(String hechoId) {
-        try {
-            return solicitudesClient.get().uri(uriBuilder -> uriBuilder.path("/solicitudes").queryParam("hechoId", hechoId).build())
-                    .retrieve()
-                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .collectList()
-                    .block();
-        } catch (WebClientResponseException e) {
-            return Collections.emptyList();
-        }
+        return solicitudesClient.get().uri(uriBuilder -> uriBuilder.path("/solicitudes").queryParam("hechoId", hechoId).build())
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .collectList()
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> crearSolicitud(Map<String, Object> payload) {
-        try {
-            return solicitudesClient.post().uri("/solicitudes")
-                    .bodyValue(payload)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return solicitudesClient.post().uri("/solicitudes")
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> obtenerSolicitud(String id) {
-        try {
-            return solicitudesClient.get().uri("/solicitudes/{id}", id)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return solicitudesClient.get().uri("/solicitudes/{id}", id)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> actualizarSolicitud(String id, Map<String, Object> payload) {
-        try {
-            return solicitudesClient.patch().uri("/solicitudes/{id}", id)
-                    .bodyValue(payload)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return solicitudesClient.patch().uri("/solicitudes/{id}", id)
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 
     public Boolean estaActivoSolicitudPorHecho(String hechoId) {
-        try {
-            return solicitudesClient.get().uri("/solicitudes/hechos/{id}/estaActivo", hechoId)
-                    .retrieve()
-                    .bodyToMono(Boolean.class)
-                    .block();
-        } catch (WebClientResponseException e) {
-            return Boolean.FALSE;
-        }
+        return solicitudesClient.get().uri("/solicitudes/hechos/{id}/estaActivo", hechoId)
+                .retrieve()
+                .bodyToMono(Boolean.class)
+                .block();
     }
 
     // --- Procesador PdI ---
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> listarPdis() {
-        try {
-            return pdiClient.get().uri("/pdis")
-                    .retrieve()
-                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .collectList()
-                    .block();
-        } catch (WebClientResponseException e) {
-            return Collections.emptyList();
-        }
+        return pdiClient.get().uri("/pdis")
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .collectList()
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> crearPdi(Map<String, Object> payload) {
-        try {
-            return pdiClient.post().uri("/pdis")
-                    .bodyValue(payload)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return pdiClient.post().uri("/pdis")
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> buscarPdiPorId(String id) {
-        try {
-            return pdiClient.get().uri("/pdis/{id}", id)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return pdiClient.get().uri("/pdis/{id}", id)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> buscarPdisPorHecho(String hechoId) {
-        try {
-            return pdiClient.get().uri("/hechos/{hechoId}/pdis", hechoId)
-                    .retrieve()
-                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .collectList()
-                    .block();
-        } catch (WebClientResponseException e) {
-            return Collections.emptyList();
-        }
+        return pdiClient.get().uri("/hechos/{hechoId}/pdis", hechoId)
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .collectList()
+                .block();
     }
 
     // --- Fuentes / Consensos (agregador) ---
-    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> listarFuentes() {
-        try {
-            return agregadorClient.get().uri("/consensos")
-                    .retrieve()
-                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .collectList()
-                    .block();
-        } catch (WebClientResponseException e) {
-            return Collections.emptyList();
-        }
+        return agregadorClient.get().uri("/consensos")
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .collectList()
+                .block();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> agregarFuente(Map<String, Object> payload) {
-        try {
-            return agregadorClient.post().uri("/consensos")
-                    .bodyValue(payload)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-        } catch (WebClientResponseException e) {
-            return null;
-        }
+        return agregadorClient.post().uri("/consensos")
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
     }
 }

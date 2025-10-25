@@ -1,53 +1,55 @@
 package ar.edu.utn.dds.k3003.telegram;
 
 import ar.edu.utn.dds.k3003.telegram.states.ConversationState;
-import ar.edu.utn.dds.k3003.telegram.states.CrearTituloState;
 import ar.edu.utn.dds.k3003.telegram.states.IdleState;
+import ar.edu.utn.dds.k3003.telegram.states.flow.StateFlowOrchestrator;
+import org.springframework.stereotype.Component;
+import ar.edu.utn.dds.k3003.telegram.ApiClientService;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.stereotype.Component;
 
 @Component
 public class ConversationManager {
 
-    // El enum State ya no es necesario, lo reemplazamos por el patrón State.
-
     public static class Context {
-        public ConversationState state = new IdleState(); // Inicia en el estado IDLE
+        public String flowName;
+        public ConversationState state = new IdleState();
         public Map<String, Object> payload = new ConcurrentHashMap<>();
         public Instant updated = Instant.now();
     }
 
     private final Map<Long, Context> contexts = new ConcurrentHashMap<>();
+    private final StateFlowOrchestrator orchestrator;
     private final Duration TTL = Duration.ofMinutes(15);
 
-    public void startCreating(long chatId) {
+    public ConversationManager(StateFlowOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
+    }
+
+    private void startFlow(long chatId, String flowName, Map<String, Object> initialPayload) {
         Context c = new Context();
-        c.state = new CrearTituloState(); // Inicia el flujo con el estado para pedir el título
+        c.flowName = flowName;
+        c.state = orchestrator.getInitialState(c.flowName);
+        c.payload.putAll(initialPayload);
         c.updated = Instant.now();
         contexts.put(chatId, c);
+    }
+
+    public void startCreating(long chatId) {
+        startFlow(chatId, StateFlowOrchestrator.CREAR_HECHO_FLOW, Collections.emptyMap());
     }
 
     public void startAgregarPdi(long chatId, String hechoId) {
-        // TODO: Implementar el flujo de AGREGAR_PDI con el patrón State
-        // Por ahora, lo dejamos como estaba para no romper la funcionalidad.
-        Context c = new Context();
-        // c.state = new AgregarPdiDescripcionState(); // (a implementar)
-        c.payload.put("hecho_id", hechoId);
-        c.updated = Instant.now();
-        contexts.put(chatId, c);
+        startFlow(chatId, StateFlowOrchestrator.CREAR_PDI_FLOW, Map.of("hecho_id", hechoId));
     }
 
     public void startCrearSolicitud(long chatId, String hechoId) {
-        // TODO: Implementar el flujo de SOLICITUD con el patrón State
-        Context c = new Context();
-        // c.state = new SolicitarBorradoDescripcionState(); // (a implementar)
-        c.payload.put("hechoId", hechoId);
-        c.updated = Instant.now();
-        contexts.put(chatId, c);
+        // Corregido: Usar snake_case para consistencia.
+        startFlow(chatId, StateFlowOrchestrator.CREAR_SOLICITUD_FLOW, Map.of("hecho_id", hechoId));
     }
 
     public ConversationState getState(long chatId) {
@@ -61,9 +63,11 @@ public class ConversationManager {
         Context c = contexts.computeIfAbsent(chatId, k -> new Context());
         c.updated = Instant.now();
 
-        // La magia del patrón State: delegamos el comportamiento al estado actual.
-        // El switch gigante ha desaparecido.
-        return c.state.handle(c, text, apiClient);
+        String response = c.state.handle(c, text, apiClient);
+
+        c.state = orchestrator.getNextState(c.flowName, c.state);
+
+        return response;
     }
 
     private void cleanupExpired() {

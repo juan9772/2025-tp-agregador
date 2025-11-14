@@ -169,4 +169,17 @@ public class ApiClientService {
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
     }
+
+    // --- Búsqueda (agregador) ---
+    public Map<String, Object> buscar(String query, int page, int size) {
+        return agregadorClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/busqueda")
+                        .queryParam("query", query)
+                        .queryParam("page", page)
+                        .queryParam("size", size)
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+    }
 }

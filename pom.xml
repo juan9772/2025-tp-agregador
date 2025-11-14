@@ -40,6 +40,10 @@
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
     <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-mongodb</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
@@ -150,7 +154,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
-        <mainClass>ar.edu.utn.dds.k3003.app.WebApp</mainClass> 
+        <mainClass>ar.edu.utn.dds.k3003.app.WebApp</mainClass>
           <excludes>
             <exclude>
               <groupId>org.projectlombok</groupId>

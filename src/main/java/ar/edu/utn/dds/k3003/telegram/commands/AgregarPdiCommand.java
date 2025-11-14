@@ -1,14 +1,17 @@
 package ar.edu.utn.dds.k3003.telegram.commands;
 
+import ar.edu.utn.dds.k3003.busqueda.services.IndexadorService;
 import ar.edu.utn.dds.k3003.telegram.ConversationManager;
 import ar.edu.utn.dds.k3003.telegram.TelegramBotService;
 
 public class AgregarPdiCommand implements Command {
 
     private final ConversationManager convManager;
+    private final IndexadorService indexadorService;
 
-    public AgregarPdiCommand(ConversationManager convManager) {
+    public AgregarPdiCommand(ConversationManager convManager, IndexadorService indexadorService) {
         this.convManager = convManager;
+        this.indexadorService = indexadorService;
     }
 
     @Override
@@ -23,7 +26,7 @@ public class AgregarPdiCommand implements Command {
             return;
         }
         String hechoId = args.trim();
-        convManager.startAgregarPdi(chatId, hechoId);
+        convManager.startAgregarPdi(chatId, hechoId, indexadorService);
         bot.executeSend(chatId, "Iniciando flujo de PdI para hecho " + hechoId + ". Enviá la URL del PdI:");
     }
 

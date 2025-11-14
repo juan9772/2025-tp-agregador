@@ -1,5 +1,6 @@
 package ar.edu.utn.dds.k3003.telegram.commands;
 
+import ar.edu.utn.dds.k3003.busqueda.services.IndexadorService;
 import ar.edu.utn.dds.k3003.telegram.ApiClientService;
 import ar.edu.utn.dds.k3003.telegram.TelegramBotService;
 
@@ -8,9 +9,11 @@ import java.util.Map;
 public class AprobarBorradoCommand implements Command {
 
     private final ApiClientService apiClientService;
+    private final IndexadorService indexadorService;
 
-    public AprobarBorradoCommand(ApiClientService apiClientService) {
+    public AprobarBorradoCommand(ApiClientService apiClientService, IndexadorService indexadorService) {
         this.apiClientService = apiClientService;
+        this.indexadorService = indexadorService;
     }
 
     @Override
@@ -21,12 +24,22 @@ public class AprobarBorradoCommand implements Command {
         }
         String solicitudId = args.trim();
         try {
-            Map<String, Object> payload = Map.of(
-                    "descripcion", "",
-                    "estado", "ACEPTADA"
-            );
-            Map<String, Object> result = apiClientService.actualizarSolicitud(solicitudId, payload);
-            bot.executeSend(chatId, "Solicitud " + solicitudId + " aprobada con éxito. Nuevo estado: " + result.get("estado"));
+            // Primero, obtenemos la solicitud para saber a qué hecho se refiere.
+            Map<String, Object> solicitud = apiClientService.obtenerSolicitud(solicitudId);
+            String hechoId = (String) solicitud.get("hechoId");
+
+            // Preparamos y enviamos la actualización del estado de la solicitud.
+            Map<String, Object> payload = Map.of("estado", "ACEPTADA");
+            apiClientService.actualizarSolicitud(solicitudId, payload);
+
+            // Si todo fue bien, marcamos el hecho como borrado en el índice de búsqueda.
+            if (hechoId != null && !hechoId.isEmpty()) {
+                indexadorService.marcarComoBorrado(hechoId);
+                bot.executeSend(chatId, "Solicitud " + solicitudId + " aprobada. El hecho " + hechoId + " ya no aparecerá en las búsquedas.");
+            } else {
+                bot.executeSend(chatId, "Solicitud " + solicitudId + " aprobada, pero no se pudo determinar el hecho asociado para actualizar el índice.");
+            }
+
         } catch (Exception e) {
             bot.executeSend(chatId, "Error al aprobar la solicitud " + solicitudId + ": " + e.getMessage());
         }
@@ -39,6 +52,6 @@ public class AprobarBorradoCommand implements Command {
 
     @Override
     public String getHelp() {
-        return "Uso: /aprobarborrado <solicitudId> - Aprueba una solicitud de borrado de un PDI.";
+        return "Uso: /aprobarborrado <solicitudId> - Aprueba una solicitud de borrado. El hecho dejará de aparecer en las búsquedas.";
     }
 }

@@ -1,5 +1,6 @@
 package ar.edu.utn.dds.k3003.telegram.commands;
 
+import ar.edu.utn.dds.k3003.busqueda.services.IndexadorService;
 import ar.edu.utn.dds.k3003.telegram.ApiClientService;
 import ar.edu.utn.dds.k3003.telegram.ConversationManager;
 import org.springframework.stereotype.Component;
@@ -16,7 +17,7 @@ public class CommandFactory {
 
     private final Map<String, Command> commandMap;
 
-    public CommandFactory(ApiClientService apiClient, ConversationManager convManager) {
+    public CommandFactory(ApiClientService apiClient, ConversationManager convManager, IndexadorService indexadorService) {
         // 1. Create all the standard commands
         List<Command> commands = Stream.of(
                 // Comandos de consulta
@@ -26,15 +27,16 @@ public class CommandFactory {
                 new SolicitudesCommand(apiClient),
                 new FuentesCommand(apiClient),
                 new ColeccionesCommand(apiClient),
+                new BuscarCommand(apiClient), // <--- NUEVO COMANDO DE BÚSQUEDA
 
                 // Comandos que inician conversación
-                new CrearCommand(convManager),
-                new AgregarPdiCommand(convManager),
+                new CrearCommand(convManager, indexadorService), // <-- CON INDEXADOR
+                new AgregarPdiCommand(convManager, indexadorService), // <-- CON INDEXADOR
                 new SolicitarBorradoCommand(convManager),
 
                 // Comandos de acción
                 new CambiarEstadoSolicitudCommand(apiClient),
-                new AprobarBorradoCommand(apiClient),
+                new AprobarBorradoCommand(apiClient, indexadorService), // <-- CON INDEXADOR
                 new RechazarBorradoCommand(apiClient)
 
         ).collect(Collectors.toList());

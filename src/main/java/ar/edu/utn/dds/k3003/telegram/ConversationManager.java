@@ -1,10 +1,10 @@
 package ar.edu.utn.dds.k3003.telegram;
 
+import ar.edu.utn.dds.k3003.busqueda.services.IndexadorService;
 import ar.edu.utn.dds.k3003.telegram.states.ConversationState;
 import ar.edu.utn.dds.k3003.telegram.states.IdleState;
 import ar.edu.utn.dds.k3003.telegram.states.flow.StateFlowOrchestrator;
 import org.springframework.stereotype.Component;
-import ar.edu.utn.dds.k3003.telegram.ApiClientService;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -20,6 +20,7 @@ public class ConversationManager {
         public ConversationState state = new IdleState();
         public Map<String, Object> payload = new ConcurrentHashMap<>();
         public Instant updated = Instant.now();
+        public IndexadorService indexadorService; // <-- CAMPO NUEVO
     }
 
     private final Map<Long, Context> contexts = new ConcurrentHashMap<>();
@@ -30,26 +31,26 @@ public class ConversationManager {
         this.orchestrator = orchestrator;
     }
 
-    private void startFlow(long chatId, String flowName, Map<String, Object> initialPayload) {
+    private void startFlow(long chatId, String flowName, Map<String, Object> initialPayload, IndexadorService indexadorService) {
         Context c = new Context();
         c.flowName = flowName;
         c.state = orchestrator.getInitialState(c.flowName);
         c.payload.putAll(initialPayload);
         c.updated = Instant.now();
+        c.indexadorService = indexadorService; // <-- GUARDAR EL SERVICIO
         contexts.put(chatId, c);
     }
 
-    public void startCreating(long chatId) {
-        startFlow(chatId, StateFlowOrchestrator.CREAR_HECHO_FLOW, Collections.emptyMap());
+    public void startCreating(long chatId, IndexadorService indexadorService) {
+        startFlow(chatId, StateFlowOrchestrator.CREAR_HECHO_FLOW, Collections.emptyMap(), indexadorService);
     }
 
-    public void startAgregarPdi(long chatId, String hechoId) {
-        startFlow(chatId, StateFlowOrchestrator.CREAR_PDI_FLOW, Map.of("hecho_id", hechoId));
+    public void startAgregarPdi(long chatId, String hechoId, IndexadorService indexadorService) {
+        startFlow(chatId, StateFlowOrchestrator.CREAR_PDI_FLOW, Map.of("hecho_id", hechoId), indexadorService);
     }
 
     public void startCrearSolicitud(long chatId, String hechoId) {
-        // Corregido: Usar snake_case para consistencia.
-        startFlow(chatId, StateFlowOrchestrator.CREAR_SOLICITUD_FLOW, Map.of("hecho_id", hechoId));
+        startFlow(chatId, StateFlowOrchestrator.CREAR_SOLICITUD_FLOW, Map.of("hecho_id", hechoId), null); // No se necesita indexador aquí
     }
 
     public ConversationState getState(long chatId) {
@@ -63,6 +64,7 @@ public class ConversationManager {
         Context c = contexts.computeIfAbsent(chatId, k -> new Context());
         c.updated = Instant.now();
 
+        // Pasar el indexador al estado
         String response = c.state.handle(c, text, apiClient);
 
         c.state = orchestrator.getNextState(c.flowName, c.state);

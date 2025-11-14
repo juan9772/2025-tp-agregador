@@ -3,6 +3,7 @@ package ar.edu.utn.dds.k3003.telegram.commands;
 import ar.edu.utn.dds.k3003.busqueda.services.IndexadorService;
 import ar.edu.utn.dds.k3003.telegram.ApiClientService;
 import ar.edu.utn.dds.k3003.telegram.ConversationManager;
+import ar.edu.utn.dds.k3003.telegram.MetricasService;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -17,7 +18,7 @@ public class CommandFactory {
 
     private final Map<String, Command> commandMap;
 
-    public CommandFactory(ApiClientService apiClient, ConversationManager convManager, IndexadorService indexadorService) {
+    public CommandFactory(ApiClientService apiClient, ConversationManager convManager, IndexadorService indexadorService, MetricasService metricasService) {
         // 1. Create all the standard commands
         List<Command> commands = Stream.of(
                 // Comandos de consulta
@@ -27,7 +28,7 @@ public class CommandFactory {
                 new SolicitudesCommand(apiClient),
                 new FuentesCommand(apiClient),
                 new ColeccionesCommand(apiClient, convManager),
-                new BuscarCommand(apiClient, convManager),
+                new BuscarCommand(apiClient, convManager, metricasService),
                 new SiguienteCommand(apiClient, convManager),
                 new UsarFuenteCommand(apiClient, convManager),
 

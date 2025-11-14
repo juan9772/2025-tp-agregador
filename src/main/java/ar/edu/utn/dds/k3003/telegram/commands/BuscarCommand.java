@@ -2,6 +2,7 @@ package ar.edu.utn.dds.k3003.telegram.commands;
 
 import ar.edu.utn.dds.k3003.telegram.ApiClientService;
 import ar.edu.utn.dds.k3003.telegram.ConversationManager;
+import ar.edu.utn.dds.k3003.telegram.MetricasService;
 import ar.edu.utn.dds.k3003.telegram.TelegramBotService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,10 +19,12 @@ public class BuscarCommand implements Command {
 
     private final ApiClientService apiClientService;
     private final ConversationManager conversationManager;
+    private final MetricasService metricasService;
 
-    public BuscarCommand(ApiClientService apiClientService, ConversationManager conversationManager) {
+    public BuscarCommand(ApiClientService apiClientService, ConversationManager conversationManager, MetricasService metricasService) {
         this.apiClientService = apiClientService;
         this.conversationManager = conversationManager;
+        this.metricasService = metricasService;
     }
 
     @Override
@@ -66,6 +70,7 @@ public class BuscarCommand implements Command {
 
         String finalQuery = queryBuilder.toString();
 
+        long startTime = System.nanoTime();
         try {
             // Llamar a la API de búsqueda con tamaño de página 10
             Map<String, Object> pageResult = apiClientService.buscar(finalQuery, page, 10);
@@ -112,6 +117,10 @@ public class BuscarCommand implements Command {
         } catch (Exception e) {
             bot.executeSend(chatId, "Error al realizar la búsqueda: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            long duration = System.nanoTime() - startTime;
+            metricasService.registrarDuracionBusqueda(duration, TimeUnit.NANOSECONDS);
+            metricasService.incrementarBusquedas();
         }
     }
 

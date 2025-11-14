@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.List;
 import java.util.Map;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ApiClientService {
@@ -18,19 +19,22 @@ public class ApiClientService {
     private final WebClient pdiClient;
     private final WebClient solicitudesClient;
     private WebClient fuenteClient; // Modificado para ser dinámico
+    private final MetricasService metricasService;
 
     public ApiClientService(
             @Value("${app.baseUrl:${APP_BASE_URL:http://localhost:8080/api}}") String appBase,
             @Value("${agregador.baseUrl:${AGREGADOR_BASE_URL:http://localhost:8083/api}}") String agregadorBase,
             @Value("${pdi.baseUrl:${PDI_BASE_URL:https://two025-dds-tp-procesadorpdi.onrender.com/api}}") String pdiBase,
             @Value("${solicitudes.baseUrl:${SOLICITUDES_BASE_URL:https://grupo12-solicitudes.onrender.com/api}}") String solicitudesBase,
-            @Value("${fuente.baseUrl:${FUENTE_BASE_URL:https://two025-tp-fuente.onrender.com/api}}") String fuenteBase
+            @Value("${fuente.baseUrl:${FUENTE_BASE_URL:https://two025-tp-fuente.onrender.com/api}}") String fuenteBase,
+            MetricasService metricasService
     ) {
         this.appClient = WebClient.builder().baseUrl(appBase).build();
         this.agregadorClient = WebClient.builder().baseUrl(agregadorBase).build();
         this.pdiClient = WebClient.builder().baseUrl(pdiBase).build();
         this.solicitudesClient = WebClient.builder().baseUrl(solicitudesBase).build();
         this.fuenteClient = WebClient.builder().baseUrl(fuenteBase).build(); // Fuente por defecto
+        this.metricasService = metricasService;
     }
 
     public void setFuenteActiva(String baseUrl) {
@@ -71,6 +75,7 @@ public class ApiClientService {
     }
 
     public Map<String, Object> crearHecho(Map<String, Object> payload) {
+        metricasService.incrementarHechosCreados();
         return fuenteClient.post().uri("/hechos")
                 .bodyValue(payload)
                 .retrieve()
@@ -135,11 +140,18 @@ public class ApiClientService {
     }
 
     public Map<String, Object> crearPdi(Map<String, Object> payload) {
-        return pdiClient.post().uri("/pdis")
-                .bodyValue(payload)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
+        long startTime = System.nanoTime();
+        try {
+            metricasService.incrementarPdisCreados();
+            return pdiClient.post().uri("/pdis")
+                    .bodyValue(payload)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+        } finally {
+            long duration = System.nanoTime() - startTime;
+            metricasService.registrarDuracionCreacionPdi(duration, TimeUnit.NANOSECONDS);
+        }
     }
 
     public Map<String, Object> buscarPdiPorId(String id) {

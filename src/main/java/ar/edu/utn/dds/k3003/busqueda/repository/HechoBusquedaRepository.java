@@ -37,9 +37,21 @@ public interface HechoBusquedaRepository extends MongoRepository<HechoBusqueda, 
     Page<HechoBusqueda> searchByText(String text, Pageable pageable);
 
     /**
+     * Busca hechos que contengan todos los tags especificados.
+     * Solo devuelve documentos que no han sido borrados.
+     *
+     * @param tags La lista de tags que deben estar presentes en el documento.
+     * @param pageable Objeto de paginación para limitar y ordenar los resultados.
+     * @return Una página de HechoBusqueda que coinciden con los tags.
+     */
+    @Query("{ $and: [ { 'tags': { $all: ?0 } }, { 'fueBorrado': false } ] }")
+    Page<HechoBusqueda> searchByTags(List<String> tags, Pageable pageable);
+
+    /**
      * Busca un documento por su nombre normalizado para evitar duplicados.
      *
      * @param nombreNormalizado El nombre del hecho en minúsculas y sin acentos.
+     * prodigy.find_usages(symbol="HechoBusquedaRepository", context_file="/home/juan/Documentos/GitHub/2025-tp-agregador/src/main/java/ar/edu/utn/dds/k3003/busqueda/repository/HechoBusquedaRepository.java", context_snippet="public interface HechoBusquedaRepository extends MongoRepository<HechoBusqueda, String> {")
      * @return Un Optional que contiene el documento si se encuentra.
      */
     Optional<HechoBusqueda> findByNombreHechoNormalizado(String nombreNormalizado);

@@ -7,7 +7,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,21 +26,30 @@ public class BusquedaServiceImpl implements BusquedaService {
         List<String> parts = Arrays.asList(query.split("\\s+"));
         List<String> tags = parts.stream()
                 .filter(p -> p.startsWith("tag:"))
-                .map(p -> p.substring(4))
+                .map(p -> p.substring(4).toLowerCase()) // Normalizar a minúsculas
                 .collect(Collectors.toList());
 
         String searchText = parts.stream()
                 .filter(p -> !p.startsWith("tag:"))
-                .collect(Collectors.joining(" "));
+                .collect(Collectors.joining(" ")).trim();
 
         // 2. Crear el objeto de paginación
         Pageable pageable = PageRequest.of(page, size);
 
         // 3. Ejecutar la consulta adecuada
-        if (tags.isEmpty()) {
-            return hechoBusquedaRepository.searchByText(searchText, pageable);
-        } else {
+        boolean hasText = !searchText.isEmpty();
+        boolean hasTags = !tags.isEmpty();
+
+        if (hasText && hasTags) {
             return hechoBusquedaRepository.searchByTextAndTags(searchText, tags, pageable);
+        } else if (hasText) {
+            return hechoBusquedaRepository.searchByText(searchText, pageable);
+        } else if (hasTags) {
+            return hechoBusquedaRepository.searchByTags(tags, pageable);
+        } else {
+            // Si no hay ni texto ni tags, devolver una página vacía o todos los hechos, según se prefiera.
+            // Aquí devolvemos una página vacía para evitar una carga masiva no intencionada.
+            return Page.empty(pageable);
         }
     }
 }

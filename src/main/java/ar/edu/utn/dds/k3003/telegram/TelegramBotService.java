@@ -143,16 +143,60 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     public void executeSend(long chatId, String text) {
-        SendMessage sm = SendMessage.builder()
-                .chatId(String.valueOf(chatId))
-                .text(text)
-                .build();
-        try {
-            execute(sm);
-            log.debug("Sent message to {} ({} chars)", chatId, text == null ? 0 : text.length());
-        } catch (TelegramApiException e) {
-            log.error("Error sending message to {}", chatId, e);
-            e.printStackTrace();
+        if (text == null || text.isEmpty()) {
+            log.warn("Attempted to send an empty or null message to chat {}", chatId);
+            return;
+        }
+
+        final int MAX_LENGTH = 4096;
+
+        if (text.length() <= MAX_LENGTH) {
+            SendMessage sm = SendMessage.builder()
+                    .chatId(String.valueOf(chatId))
+                    .text(text)
+                    .build();
+            try {
+                execute(sm);
+                log.debug("Sent message to {} ({} chars)", chatId, text.length());
+            } catch (TelegramApiException e) {
+                log.error("Error sending message to {}", chatId, e);
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        log.warn("Message for chat {} is too long ({} chars), splitting.", chatId, text.length());
+        int index = 0;
+        while (index < text.length()) {
+            int endIndex = Math.min(index + MAX_LENGTH, text.length());
+
+            // Find the last newline character within the chunk to avoid splitting mid-line.
+            int lastNewline = text.substring(index, endIndex).lastIndexOf('\n');
+
+            // If we are not at the end of the message and a newline was found, split there.
+            if (endIndex < text.length() && lastNewline > 0) {
+                endIndex = index + lastNewline;
+            }
+
+            String chunk = text.substring(index, endIndex);
+
+            SendMessage sm = SendMessage.builder()
+                    .chatId(String.valueOf(chatId))
+                    .text(chunk)
+                    .build();
+            try {
+                execute(sm);
+                log.debug("Sent chunk to {} ({} chars)", chatId, chunk.length());
+            } catch (TelegramApiException e) {
+                log.error("Error sending message chunk to {}", chatId, e);
+                e.printStackTrace();
+            }
+
+            index = endIndex;
+            // Skip the newline character for the next chunk.
+            if (index < text.length() && text.charAt(index) == '\n') {
+                index++;
+            }
         }
     }
 }

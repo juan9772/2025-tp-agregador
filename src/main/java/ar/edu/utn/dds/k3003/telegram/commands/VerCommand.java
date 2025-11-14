@@ -62,9 +62,9 @@ public class VerCommand implements Command {
             for (Map<String, Object> pdi : pdis) {
                 sb.append(" - ID: ").append(pdi.getOrDefault("id", "(no id)")).append("\n");
                 if (pdi.containsKey("imagen_url")) sb.append("   Imagen: ").append(pdi.get("imagen_url")).append("\n");
-                if (pdi.containsKey("descripcion")) sb.append("   Descripcion: ").append(pdi.get("descripcion")).append("\n");
-                if (pdi.containsKey("contenido")) sb.append("   Contenido: ").append(pdi.get("contenido")).append("\n");
-                if (pdi.containsKey("ocr_texto")) sb.append("   OCR: ").append(pdi.get("ocr_texto")).append("\n");
+                if (pdi.containsKey("descripcion")) sb.append("   Descripcion: ").append(truncate(Objects.toString(pdi.get("descripcion")), 200)).append("\n");
+                if (pdi.containsKey("contenido")) sb.append("   Contenido: ").append(truncate(Objects.toString(pdi.get("contenido")), 200)).append("\n");
+                if (pdi.containsKey("ocr_texto")) sb.append("   OCR: ").append(truncate(Objects.toString(pdi.get("ocr_texto")), 200)).append("\n");
                 if (pdi.containsKey("lugar")) sb.append("   Origen: ").append(pdi.get("lugar")).append("\n");
 
                 Object momentoObj = pdi.get("momento");
@@ -91,6 +91,13 @@ public class VerCommand implements Command {
         }
 
         bot.executeSend(chatId, sb.toString());
+    }
+
+    private String truncate(String text, int maxLength) {
+        if (text == null || text.length() <= maxLength) {
+            return text;
+        }
+        return text.substring(0, maxLength) + "...";
     }
 
     @Override

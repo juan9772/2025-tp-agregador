@@ -2,11 +2,16 @@ package ar.edu.utn.dds.k3003.telegram.commands;
 
 import ar.edu.utn.dds.k3003.telegram.ApiClientService;
 import ar.edu.utn.dds.k3003.telegram.TelegramBotService;
+import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+@Slf4j
 public class BuscarCommand implements Command {
 
     private final ApiClientService apiClientService;
@@ -22,31 +27,56 @@ public class BuscarCommand implements Command {
             return;
         }
 
-        // Extraer página de los argumentos, si existe
-        String[] parts = args.split("\\s+");
-        int page = 0;
-        String query = args;
+        // Expresión regular para capturar texto entre comillas, tags y paginación
+        Pattern pattern = Pattern.compile("\"([^\"]*)\"|(\\S+)");
+        Matcher matcher = pattern.matcher(args);
 
-        for (String part : parts) {
-            if (part.toLowerCase().startsWith("page:")) {
-                try {
-                    page = Integer.parseInt(part.substring(5));
-                    query = args.replace(part, "").trim(); // Quitar el page: de la query
-                } catch (NumberFormatException e) {
-                    // Ignorar si el formato es incorrecto
-                }
-                break;
+        List<String> parts = new ArrayList<>();
+        while (matcher.find()) {
+            if (matcher.group(1) != null) {
+                // Texto entre comillas
+                parts.add(matcher.group(1));
+            } else {
+                // Texto sin comillas (tags, paginación, etc.)
+                parts.add(matcher.group(2));
             }
         }
 
-        try {
-            // Llamar a la API de búsqueda
-            Map<String, Object> pageResult = apiClientService.buscar(query, page, 5); // 5 resultados por página
+        int page = 0;
+        StringBuilder queryBuilder = new StringBuilder();
 
-            // Procesar la respuesta
+        for (String part : parts) {
+            String cleanedPart = part.replace(",", "").trim(); // Limpiar comas
+            if (cleanedPart.toLowerCase().startsWith("page:")) {
+                try {
+                    page = Integer.parseInt(cleanedPart.substring(5));
+                } catch (NumberFormatException e) {
+                    // Ignorar si el formato es incorrecto
+                }
+            } else {
+                if (queryBuilder.length() > 0) {
+                    queryBuilder.append(" ");
+                }
+                queryBuilder.append(cleanedPart);
+            }
+        }
+
+        String finalQuery = queryBuilder.toString();
+
+        try {
+            // Llamar a la API de búsqueda con tamaño de página 10
+            Map<String, Object> pageResult = apiClientService.buscar(finalQuery, page, 10);
+
+            if (pageResult == null) {
+                log.error("La API de búsqueda devolvió un resultado nulo para la consulta: {}", finalQuery);
+                bot.executeSend(chatId, "Error: No se pudo obtener una respuesta del servicio de búsqueda.");
+                return;
+            }
+
+            // Procesar la respuesta con valores por defecto para evitar NPE
             List<Map<String, Object>> resultados = (List<Map<String, Object>>) pageResult.get("content");
-            int totalPages = (int) pageResult.get("totalPages");
-            long totalElements = ((Number) pageResult.get("totalElements")).longValue();
+            int totalPages = Optional.ofNullable((Integer) pageResult.get("totalPages")).orElse(0);
+            long totalElements = Optional.ofNullable((Number) pageResult.get("totalElements")).map(Number::longValue).orElse(0L);
 
             if (resultados == null || resultados.isEmpty()) {
                 bot.executeSend(chatId, "No se encontraron resultados para su búsqueda.");
@@ -56,9 +86,13 @@ public class BuscarCommand implements Command {
             StringBuilder sb = new StringBuilder("Resultados de la búsqueda:\n");
             for (Map<String, Object> hecho : resultados) {
                 sb.append("\n- *Hecho:* ").append(hecho.get("displayNombre"))
-                  .append("\n  *ID:* ").append(hecho.get("id"))
-                  .append("\n  *Colecciones:* ").append(String.join(", ", (List<String>)hecho.get("colecciones")))
-                  .append("\n");
+                  .append("\n  *ID:* ").append(hecho.get("id"));
+
+                List<String> colecciones = (List<String>) hecho.get("colecciones");
+                if (colecciones != null && !colecciones.isEmpty()) {
+                    sb.append("\n  *Colecciones:* ").append(String.join(", ", colecciones));
+                }
+                sb.append("\n");
             }
             sb.append("\n---\nPágina ").append(page + 1).append(" de ").append(totalPages)
               .append(" (Total: ").append(totalElements).append(" resultados)");

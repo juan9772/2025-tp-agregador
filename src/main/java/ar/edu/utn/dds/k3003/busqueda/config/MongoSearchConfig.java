@@ -31,10 +31,6 @@ public class MongoSearchConfig {
     // Spring Data usará este Template para hablar con la base de datos de búsqueda.
     @Bean(name = "searchMongoTemplate")
     public MongoTemplate mongoTemplate() throws Exception {
-        String databaseName = new ConnectionString(mongoUri).getDatabase();
-        if (databaseName == null) {
-            throw new Exception("El nombre de la base de datos no está especificado en la URI de MongoDB.");
-        }
-        return new MongoTemplate(mongoClient(), databaseName);
+        return new MongoTemplate(mongoClient(), "Busquedas");
     }
 }

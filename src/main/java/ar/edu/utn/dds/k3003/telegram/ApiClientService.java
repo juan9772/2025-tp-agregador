@@ -21,7 +21,7 @@ public class ApiClientService {
 
     public ApiClientService(
             @Value("${app.baseUrl:${APP_BASE_URL:http://localhost:8080/api}}") String appBase,
-            @Value("${agregador.baseUrl:${AGREGADOR_BASE_URL:https://two025-tp-agregador.onrender.com/api}}") String agregadorBase,
+            @Value("${agregador.baseUrl:${AGREGADOR_BASE_URL:http://localhost:8083/api}}") String agregadorBase,
             @Value("${pdi.baseUrl:${PDI_BASE_URL:https://two025-dds-tp-procesadorpdi.onrender.com/api}}") String pdiBase,
             @Value("${solicitudes.baseUrl:${SOLICITUDES_BASE_URL:https://grupo12-solicitudes.onrender.com/api}}") String solicitudesBase,
             @Value("${fuente.baseUrl:${FUENTE_BASE_URL:https://two025-tp-fuente.onrender.com/api}}") String fuenteBase

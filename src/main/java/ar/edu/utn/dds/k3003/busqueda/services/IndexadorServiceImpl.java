@@ -29,7 +29,6 @@ public class IndexadorServiceImpl implements IndexadorService {
         // 1. Obtener datos del hecho y sus PDIs
         Map<String, Object> hecho = apiClientService.obtenerHecho(hechoId);
         List<Map<String, Object>> pdis = apiClientService.buscarPdisPorHecho(hechoId);
-        // TODO: Obtener tags y resultados de herramientas externas cuando las APIs estén disponibles.
 
         String nombreHecho = (String) hecho.getOrDefault("titulo", "");
         String descripcionHecho = (String) hecho.getOrDefault("descripcion", "");
@@ -37,12 +36,31 @@ public class IndexadorServiceImpl implements IndexadorService {
         // 2. Normalizar nombre para evitar duplicados
         String nombreNormalizado = normalizar(nombreHecho);
 
-        // 3. Concatenar todo el texto relevante para la búsqueda
+        // 3. Concatenar todo el texto relevante para la búsqueda y extraer tags
         StringBuilder textoCompleto = new StringBuilder();
         textoCompleto.append(nombreHecho).append(" ").append(descripcionHecho);
+        
+        List<String> allTags = new java.util.ArrayList<>();
         for (Map<String, Object> pdi : pdis) {
             textoCompleto.append(" ").append(pdi.getOrDefault("descripcion", ""));
             textoCompleto.append(" ").append(pdi.getOrDefault("contenido", ""));
+            
+            // Extraer texto OCR si está disponible
+            Object ocrTexto = pdi.get("ocr_texto");
+            if (ocrTexto != null && !ocrTexto.toString().isBlank()) {
+                textoCompleto.append(" ").append(ocrTexto.toString());
+            }
+            
+            // ⭐ NUEVO: Extraer tags automáticos generados por el etiquetador
+            Object etiquetasAutoObj = pdi.get("etiquetas_auto");
+            if (etiquetasAutoObj instanceof List) {
+                List<String> etiquetasAuto = (List<String>) etiquetasAutoObj;
+                for (String tag : etiquetasAuto) {
+                    if (tag != null && !tag.isBlank() && !allTags.contains(tag)) {
+                        allTags.add(tag);
+                    }
+                }
+            }
         }
 
         // 4. Buscar si el documento ya existe o crear uno nuevo
@@ -56,9 +74,12 @@ public class IndexadorServiceImpl implements IndexadorService {
         doc.setTextoBusqueda(textoCompleto.toString());
         doc.setFueBorrado(false);
         doc.setUltimoUpdate(Instant.now());
+        
+        // ⭐ NUEVO: Asignar los tags extraídos
+        doc.setTags(allTags);
 
         // Añadir colección al documento (si no existe ya)
-        String nombreColeccion = (String) hecho.getOrDefault("coleccionNombre", "");
+        String nombreColeccion = (String) hecho.getOrDefault("nombreColeccion", "");
         if (doc.getColecciones() == null) {
             doc.setColecciones(new java.util.ArrayList<>());
         }

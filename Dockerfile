@@ -8,7 +8,7 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # Stage 2: Create the final Docker image using OpenJDK 21
-FROM openjdk:21-jdk
+FROM eclipse-temurin:21-jdk
 VOLUME /tmp
 
 # Copy the JAR from the build stage

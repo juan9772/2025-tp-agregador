@@ -1,5 +1,7 @@
 package ar.edu.utn.dds.k3003.telegram.states.flow;
 
+import ar.edu.utn.dds.k3003.telegram.ApiClientService;
+import ar.edu.utn.dds.k3003.telegram.ConversationManager;
 import ar.edu.utn.dds.k3003.telegram.states.*;
 import org.springframework.stereotype.Component;
 import java.util.Map;
@@ -21,38 +23,49 @@ public class StaticStateFlowOrchestrator implements StateFlowOrchestrator {
         flowTransitions = Map.of(
                 // Crear Hecho Flow
                 CrearTituloState.class, CrearColeccionState::new,
-                CrearColeccionState.class, () -> new ConfirmarState(
-                        (apiSvc, payload) -> {
-                            payload.put("id", "");
-                            return apiSvc.crearHecho(payload);
-                        },
-                        (result) -> "Hecho creado con ID: " + result.getOrDefault("id", "(desconocido)"),
-                        "Creación cancelada."
-                ),
+                CrearColeccionState.class, ConfirmarState::new,
 
                 // Crear PDI Flow (Corregido y Centralizado)
                 CrearPdiUrlState.class, CrearPdiDescripcionState::new,
                 CrearPdiDescripcionState.class, CrearPdiLugarState::new,
                 CrearPdiLugarState.class, CrearPdiContenidoState::new,
-                CrearPdiContenidoState.class, () -> new ConfirmarState(
-                        (apiSvc, payload) -> {
-                            payload.put("id", "");
-                            return apiSvc.crearPdi(payload);
-                        },
-                        (result) -> "Punto de Interés creado con éxito y asociado al hecho.",
-                        "Creación de PdI cancelada."
-                ),
+                CrearPdiContenidoState.class, () -> new ConversationState() {
+                    @Override
+                    public String handle(ConversationManager.Context context, String message, ApiClientService apiClient) {
+                        if ("si".equalsIgnoreCase(message)) {
+                            try {
+                                Map<String, Object> payload = context.payload;
+                                payload.put("id", "");
+                                apiClient.crearPdi(payload);
+                                return "Punto de Interés creado con éxito y asociado al hecho.";
+                            } catch (Exception e) {
+                                return "Error al crear el PdI: " + e.getMessage();
+                            }
+                        } else {
+                            return "Creación de PdI cancelada.";
+                        }
+                    }
+                },
 
                 // Crear Solicitud Flow
-                CrearSolicitudDescripcionState.class, () -> new ConfirmarState(
-                        (apiSvc, payload) -> {
-                            payload.put("id", "");
-                            payload.put("estado", "CREADA");
-                            return apiSvc.crearSolicitud(payload);
-                        },
-                        (result) -> "Solicitud de borrado creada con éxito con ID: " + result.getOrDefault("id", "(desconocido)"),
-                        "Creación de solicitud cancelada."
-                )
+                CrearSolicitudDescripcionState.class, () -> new ConversationState() {
+                    @Override
+                    public String handle(ConversationManager.Context context, String message, ApiClientService apiClient) {
+                        if ("si".equalsIgnoreCase(message)) {
+                            try {
+                                Map<String, Object> payload = context.payload;
+                                payload.put("id", "");
+                                payload.put("estado", "CREADA");
+                                Map<String, Object> result = apiClient.crearSolicitud(payload);
+                                return "Solicitud de borrado creada con éxito con ID: " + result.getOrDefault("id", "(desconocido)");
+                            } catch (Exception e) {
+                                return "Error al crear la solicitud: " + e.getMessage();
+                            }
+                        } else {
+                            return "Creación de solicitud cancelada.";
+                        }
+                    }
+                }
         );
     }
 
@@ -64,10 +77,6 @@ public class StaticStateFlowOrchestrator implements StateFlowOrchestrator {
 
     @Override
     public ConversationState getNextState(String flowName, ConversationState currentState) {
-        if (currentState instanceof ConfirmarState) {
-            return new IdleState();
-        }
-
         Supplier<ConversationState> supplier = flowTransitions.get(currentState.getClass());
         return (supplier != null) ? supplier.get() : new IdleState();
     }

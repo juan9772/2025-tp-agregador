@@ -28,7 +28,7 @@ public class IndexadorServiceImpl implements IndexadorService {
     public void indexar(String hechoId) {
         // 1. Obtener datos del hecho y sus PDIs
         Map<String, Object> hecho = apiClientService.obtenerHecho(hechoId);
-        List<Map<String, Object>> pdis = apiClientService.obtenerPdisDeHecho(hechoId);
+        List<Map<String, Object>> pdis = apiClientService.buscarPdisPorHecho(hechoId);
         // TODO: Obtener tags y resultados de herramientas externas cuando las APIs estén disponibles.
 
         String nombreHecho = (String) hecho.getOrDefault("titulo", "");

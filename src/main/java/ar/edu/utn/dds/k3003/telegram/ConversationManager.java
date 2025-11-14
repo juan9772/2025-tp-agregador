@@ -53,10 +53,19 @@ public class ConversationManager {
         startFlow(chatId, StateFlowOrchestrator.CREAR_SOLICITUD_FLOW, Map.of("hecho_id", hechoId), null); // No se necesita indexador aquí
     }
 
+    public void startAgregarFuente(long chatId) {
+        startFlow(chatId, StateFlowOrchestrator.AGREGAR_FUENTE_FLOW, Collections.emptyMap(), null);
+    }
+
     public ConversationState getState(long chatId) {
         cleanupExpired();
         Context c = contexts.get(chatId);
         return c == null ? new IdleState() : c.state;
+    }
+
+    public Context getContext(long chatId) {
+        cleanupExpired();
+        return contexts.computeIfAbsent(chatId, k -> new Context());
     }
 
     public String handle(long chatId, String text, ApiClientService apiClient) {

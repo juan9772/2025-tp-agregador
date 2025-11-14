@@ -21,18 +21,21 @@ public class CommandFactory {
         // 1. Create all the standard commands
         List<Command> commands = Stream.of(
                 // Comandos de consulta
-                new ListarCommand(apiClient),
+                new ListarCommand(apiClient, convManager),
                 new VerCommand(apiClient),
                 new PdisCommand(apiClient),
                 new SolicitudesCommand(apiClient),
                 new FuentesCommand(apiClient),
-                new ColeccionesCommand(apiClient),
-                new BuscarCommand(apiClient), // <--- NUEVO COMANDO DE BÚSQUEDA
+                new ColeccionesCommand(apiClient, convManager),
+                new BuscarCommand(apiClient, convManager),
+                new SiguienteCommand(apiClient, convManager),
+                new UsarFuenteCommand(apiClient, convManager),
 
                 // Comandos que inician conversación
                 new CrearCommand(convManager, indexadorService), // <-- CON INDEXADOR
                 new AgregarPdiCommand(convManager, indexadorService), // <-- CON INDEXADOR
                 new SolicitarBorradoCommand(convManager),
+                new AgregarFuenteCommand(convManager),
 
                 // Comandos de acción
                 new CambiarEstadoSolicitudCommand(apiClient),

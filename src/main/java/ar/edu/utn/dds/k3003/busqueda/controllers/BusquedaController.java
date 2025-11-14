@@ -22,7 +22,7 @@ public class BusquedaController {
     @GetMapping
     public ResponseEntity<Page<HechoBusqueda>> buscar(
             @RequestParam String query,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Page<HechoBusqueda> resultados = busquedaService.buscar(query, page, size);

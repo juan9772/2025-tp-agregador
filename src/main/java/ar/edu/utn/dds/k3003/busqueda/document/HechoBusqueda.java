@@ -20,7 +20,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "hechos_busqueda")
-@CompoundIndex(name = "texto_busqueda_index", def = "{'textoBusqueda': 'text'}")
+@CompoundIndex(name = "texto_busqueda_index", def = "{'texto_busqueda': 'text'}")
 public class HechoBusqueda {
 
     @Id

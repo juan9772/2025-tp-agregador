@@ -7,6 +7,8 @@ public interface StateFlowOrchestrator {
     String CREAR_HECHO_FLOW = "crear_hecho";
     String CREAR_PDI_FLOW = "crear_pdi";
     String CREAR_SOLICITUD_FLOW = "crear_solicitud";
+    String AGREGAR_FUENTE_FLOW = "agregar_fuente";
+
 
     ConversationState getInitialState(String flowName);
 

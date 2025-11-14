@@ -58,7 +58,7 @@ public class IndexadorServiceImpl implements IndexadorService {
         doc.setUltimoUpdate(Instant.now());
 
         // Añadir colección al documento (si no existe ya)
-        String nombreColeccion = (String) hecho.getOrDefault("coleccionNombre", "");
+        String nombreColeccion = (String) hecho.getOrDefault("coleccion_nombre", "");
         if (doc.getColecciones() == null) {
             doc.setColecciones(new java.util.ArrayList<>());
         }

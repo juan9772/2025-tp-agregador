@@ -22,7 +22,7 @@ public interface HechoBusquedaRepository extends MongoRepository<HechoBusqueda, 
      * @param pageable Objeto de paginación para limitar y ordenar los resultados.
      * @return Una página de documentos de HechoBusqueda que coinciden con los criterios.
      */
-    @Query("{ $and: [ { $text: { $search: ?0 } }, { 'tags': { $all: ?1 } }, { 'fueBorrado': false } ] }")
+    @Query("{ $and: [ { 'textoBusqueda': { $regex: ?0, $options: 'i' } }, { 'tags': { $all: ?1 } }, { 'fueBorrado': false } ] }")
     Page<HechoBusqueda> searchByTextAndTags(String text, List<String> tags, Pageable pageable);
 
     /**
@@ -33,7 +33,7 @@ public interface HechoBusquedaRepository extends MongoRepository<HechoBusqueda, 
      * @param pageable Objeto de paginación para limitar y ordenar los resultados.
      * @return Una página de HechoBusqueda que coinciden con el texto.
      */
-    @Query("{ $and: [ { $text: { $search: ?0 } }, { 'fueBorrado': false } ] }")
+    @Query("{ $and: [ { 'textoBusqueda': { $regex: ?0, $options: 'i' } }, { 'fueBorrado': false } ] }")
     Page<HechoBusqueda> searchByText(String text, Pageable pageable);
 
     /**

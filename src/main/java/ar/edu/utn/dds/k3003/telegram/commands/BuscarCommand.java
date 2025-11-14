@@ -1,6 +1,7 @@
 package ar.edu.utn.dds.k3003.telegram.commands;
 
 import ar.edu.utn.dds.k3003.telegram.ApiClientService;
+import ar.edu.utn.dds.k3003.telegram.ConversationManager;
 import ar.edu.utn.dds.k3003.telegram.TelegramBotService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,9 +16,11 @@ import java.util.regex.Pattern;
 public class BuscarCommand implements Command {
 
     private final ApiClientService apiClientService;
+    private final ConversationManager conversationManager;
 
-    public BuscarCommand(ApiClientService apiClientService) {
+    public BuscarCommand(ApiClientService apiClientService, ConversationManager conversationManager) {
         this.apiClientService = apiClientService;
+        this.conversationManager = conversationManager;
     }
 
     @Override
@@ -75,17 +78,24 @@ public class BuscarCommand implements Command {
 
             // Procesar la respuesta con valores por defecto para evitar NPE
             List<Map<String, Object>> resultados = (List<Map<String, Object>>) pageResult.get("content");
-            int totalPages = Optional.ofNullable((Integer) pageResult.get("totalPages")).orElse(0);
-            long totalElements = Optional.ofNullable((Number) pageResult.get("totalElements")).map(Number::longValue).orElse(0L);
+            int totalPages = Optional.ofNullable((Integer) pageResult.get("total_pages")).orElse(1);
+            long totalElements = Optional.ofNullable((Number) pageResult.get("total_elements")).map(Number::longValue).orElse(0L);
 
             if (resultados == null || resultados.isEmpty()) {
                 bot.executeSend(chatId, "No se encontraron resultados para su búsqueda.");
                 return;
             }
 
+            // Guardar el estado de la búsqueda en la conversación
+            ConversationManager.Context context = conversationManager.getContext(chatId);
+            context.payload.put("last_search_query", finalQuery);
+            context.payload.put("last_search_page", page);
+            context.payload.put("last_search_total_pages", totalPages);
+
+
             StringBuilder sb = new StringBuilder("Resultados de la búsqueda:\n");
             for (Map<String, Object> hecho : resultados) {
-                sb.append("\n- *Hecho:* ").append(hecho.get("displayNombre"))
+                sb.append("\n- *Hecho:* ").append(hecho.get("display_nombre"))
                   .append("\n  *ID:* ").append(hecho.get("id"));
 
                 List<String> colecciones = (List<String>) hecho.get("colecciones");

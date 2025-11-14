@@ -17,7 +17,8 @@ public class StaticStateFlowOrchestrator implements StateFlowOrchestrator {
         initialStates = Map.of(
                 CREAR_HECHO_FLOW, CrearTituloState::new,
                 CREAR_PDI_FLOW, CrearPdiUrlState::new,
-                CREAR_SOLICITUD_FLOW, CrearSolicitudDescripcionState::new
+                CREAR_SOLICITUD_FLOW, CrearSolicitudDescripcionState::new,
+                AGREGAR_FUENTE_FLOW, CrearFuenteNombreState::new
         );
 
         flowTransitions = Map.of(
@@ -65,7 +66,11 @@ public class StaticStateFlowOrchestrator implements StateFlowOrchestrator {
                             return "Creación de solicitud cancelada.";
                         }
                     }
-                }
+                },
+
+                // Agregar Fuente Flow
+                CrearFuenteNombreState.class, CrearFuenteEndpointState::new,
+                CrearFuenteEndpointState.class, IdleState::new
         );
     }
 

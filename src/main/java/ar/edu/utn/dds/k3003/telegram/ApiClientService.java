@@ -17,7 +17,7 @@ public class ApiClientService {
     private final WebClient agregadorClient;
     private final WebClient pdiClient;
     private final WebClient solicitudesClient;
-    private final WebClient fuenteClient;
+    private WebClient fuenteClient; // Modificado para ser dinámico
 
     public ApiClientService(
             @Value("${app.baseUrl:${APP_BASE_URL:http://localhost:8080/api}}") String appBase,
@@ -30,7 +30,11 @@ public class ApiClientService {
         this.agregadorClient = WebClient.builder().baseUrl(agregadorBase).build();
         this.pdiClient = WebClient.builder().baseUrl(pdiBase).build();
         this.solicitudesClient = WebClient.builder().baseUrl(solicitudesBase).build();
-        this.fuenteClient = WebClient.builder().baseUrl(fuenteBase).build();
+        this.fuenteClient = WebClient.builder().baseUrl(fuenteBase).build(); // Fuente por defecto
+    }
+
+    public void setFuenteActiva(String baseUrl) {
+        this.fuenteClient = WebClient.builder().baseUrl(baseUrl).build();
     }
 
     // --- Colecciones ---
@@ -155,15 +159,15 @@ public class ApiClientService {
 
     // --- Fuentes / Consensos (agregador) ---
     public List<Map<String, Object>> listarFuentes() {
-        return agregadorClient.get().uri("/consensos")
+        return agregadorClient.get().uri("/fuentes")
                 .retrieve()
                 .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .collectList()
                 .block();
     }
 
-    public Map<String, Object> agregarFuente(Map<String, Object> payload) {
-        return agregadorClient.post().uri("/consensos")
+    public Map<String, Object> crearFuente(Map<String, Object> payload) {
+        return agregadorClient.post().uri("/fuentes")
                 .bodyValue(payload)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})

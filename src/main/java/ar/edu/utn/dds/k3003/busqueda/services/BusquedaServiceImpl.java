@@ -8,6 +8,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -72,8 +74,6 @@ public class BusquedaServiceImpl implements BusquedaService {
         }
 
         // --- Búsqueda en Hechos --- //
-        Query hechoQuery = new Query().with(pageable);
-
         // Criterios directos en Hecho (texto Y tags)
         List<Criteria> hechoDirectCriterias = new ArrayList<>();
         if (hasText) {
@@ -96,11 +96,29 @@ public class BusquedaServiceImpl implements BusquedaService {
             return Page.empty(pageable);
         }
 
-        hechoQuery.addCriteria(new Criteria().orOperator(orGlobalCriteria.toArray(new Criteria[0])));
-        hechoQuery.addCriteria(Criteria.where("fueBorrado").is(false));
+        Criteria finalCriteria = new Criteria().orOperator(orGlobalCriteria.toArray(new Criteria[0]))
+                                     .and("fueBorrado").is(false);
 
-        long count = mongoTemplate.count(hechoQuery, HechoBusqueda.class);
-        List<HechoBusqueda> resultados = mongoTemplate.find(hechoQuery, HechoBusqueda.class);
+        // --- Aggregation for Count ---
+        Aggregation countAggregation = Aggregation.newAggregation(
+            Aggregation.match(finalCriteria),
+            Aggregation.group("nombreHechoNormalizado"),
+            Aggregation.count().as("total")
+        );
+
+        List<Document> countResult = mongoTemplate.aggregate(countAggregation, "hechos_busqueda", Document.class).getMappedResults();
+        long count = countResult.isEmpty() ? 0 : ((Integer) countResult.get(0).get("total")).longValue();
+
+        // --- Aggregation for Data ---
+        TypedAggregation<HechoBusqueda> dataAggregation = Aggregation.newAggregation(HechoBusqueda.class,
+            Aggregation.match(finalCriteria),
+            Aggregation.group("nombreHechoNormalizado").first("$$ROOT").as("doc"),
+            Aggregation.replaceRoot("doc"),
+            Aggregation.skip(pageable.getOffset()),
+            Aggregation.limit(pageable.getPageSize())
+        );
+
+        List<HechoBusqueda> resultados = mongoTemplate.aggregate(dataAggregation, HechoBusqueda.class).getMappedResults();
 
         return new PageImpl<>(resultados, pageable, count);
     }

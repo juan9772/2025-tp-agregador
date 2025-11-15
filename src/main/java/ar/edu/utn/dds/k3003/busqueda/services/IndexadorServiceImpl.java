@@ -81,6 +81,11 @@ public class IndexadorServiceImpl implements IndexadorService {
         }
     }
 
+    @Override
+    public void borrar(String hechoId) {
+        hechoBusquedaRepository.deleteById(hechoId);
+    }
+
     private String normalizar(String input) {
         if (input == null) return "";
         String texto = Normalizer.normalize(input, Normalizer.Form.NFD);

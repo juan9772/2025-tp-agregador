@@ -32,12 +32,12 @@ public class AprobarBorradoCommand implements Command {
             Map<String, Object> payload = Map.of("estado", "ACEPTADA");
             apiClientService.actualizarSolicitud(solicitudId, payload);
 
-            // Si todo fue bien, marcamos el hecho como borrado en el índice de búsqueda.
+            // Si todo fue bien, borramos el hecho del índice de búsqueda.
             if (hechoId != null && !hechoId.isEmpty()) {
-                indexadorService.marcarComoBorrado(hechoId);
-                bot.executeSend(chatId, "Solicitud " + solicitudId + " aprobada. El hecho " + hechoId + " ya no aparecerá en las búsquedas.");
+                indexadorService.borrar(hechoId);
+                bot.executeSend(chatId, "Solicitud " + solicitudId + " aprobada. El hecho " + hechoId + " ha sido eliminado del índice de búsqueda.");
             } else {
-                bot.executeSend(chatId, "Solicitud " + solicitudId + " aprobada, pero no se pudo determinar el hecho asociado para actualizar el índice.");
+                bot.executeSend(chatId, "Solicitud " + solicitudId + " aprobada, pero no se pudo determinar el hecho asociado para eliminarlo del índice.");
             }
 
         } catch (Exception e) {
@@ -52,6 +52,6 @@ public class AprobarBorradoCommand implements Command {
 
     @Override
     public String getHelp() {
-        return "Uso: /aprobarborrado <solicitudId> - Aprueba una solicitud de borrado. El hecho dejará de aparecer en las búsquedas.";
+        return "Uso: /aprobarborrado <solicitudId> - Aprueba una solicitud de borrado, eliminando el hecho del índice de búsqueda.";
     }
 }

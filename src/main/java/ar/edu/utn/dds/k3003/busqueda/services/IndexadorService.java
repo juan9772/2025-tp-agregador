@@ -18,4 +18,11 @@ public interface IndexadorService {
      * @param hechoId El ID del hecho a marcar como borrado.
      */
     void marcarComoBorrado(String hechoId);
+
+    /**
+     * Borra un hecho de la base de datos de búsqueda.
+     *
+     * @param hechoId El ID del hecho a borrar.
+     */
+    void borrar(String hechoId);
 }

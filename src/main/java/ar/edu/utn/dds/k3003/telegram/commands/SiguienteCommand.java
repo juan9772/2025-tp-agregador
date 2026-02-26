@@ -48,7 +48,7 @@ public class SiguienteCommand implements Command {
             }
 
             List<Map<String, Object>> resultados = (List<Map<String, Object>>) pageResult.get("content");
-            long totalElements = Optional.ofNullable((Number) pageResult.get("total_elements")).map(Number::longValue).orElse(0L);
+            long totalElements = Optional.ofNullable((Number) pageResult.get("totalElements")).map(Number::longValue).orElse(0L);
 
             if (resultados == null || resultados.isEmpty()) {
                 bot.executeSend(chatId, "No se encontraron más resultados.");
@@ -60,7 +60,7 @@ public class SiguienteCommand implements Command {
 
             StringBuilder sb = new StringBuilder("Resultados de la búsqueda:\n");
             for (Map<String, Object> hecho : resultados) {
-                sb.append("\n- *Hecho:* ").append(hecho.get("display_nombre"))
+                sb.append("\n- *Hecho:* ").append(hecho.get("displayNombre"))
                   .append("\n  *ID:* ").append(hecho.get("id"));
 
                 List<String> colecciones = (List<String>) hecho.get("colecciones");
